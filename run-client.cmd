@@ -1,0 +1,3 @@
+@echo off
+rem Starts the client. Server address: client.properties or --server.host=... --server.port=...
+start "" javaw -jar client\target\tour-client.jar %*

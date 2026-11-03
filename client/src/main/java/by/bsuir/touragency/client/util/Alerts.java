@@ -1,0 +1,72 @@
+package by.bsuir.touragency.client.util;
+
+import by.bsuir.touragency.client.view.Navigator;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+
+public final class Alerts {
+
+    private Alerts() {
+    }
+
+    public static void error(String message) {
+        show(Alert.AlertType.ERROR, I18n.t("common.error"), message);
+    }
+
+    // Перегрузка: со своим заголовком
+    public static void error(String title, String message) {
+        show(Alert.AlertType.ERROR, title, message);
+    }
+
+    public static void info(String message) {
+        show(Alert.AlertType.INFORMATION, I18n.t("common.info"), message);
+    }
+
+    public static void info(String title, String message) {
+        show(Alert.AlertType.INFORMATION, title, message);
+    }
+
+    public static boolean confirm(String message) {
+        ButtonType yes = new ButtonType(I18n.t("common.yes"), ButtonBar.ButtonData.OK_DONE);
+        ButtonType no = new ButtonType(I18n.t("common.no"), ButtonBar.ButtonData.CANCEL_CLOSE);
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, message, yes, no);
+        prepare(alert, I18n.t("common.confirm"));
+        return alert.showAndWait().orElse(no) == yes;
+    }
+
+    private static void show(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setContentText(message);
+        prepare(alert, title);
+        alert.showAndWait();
+    }
+
+    /**
+     * Подписи стандартных кнопок (OK / Отмена) на языке интерфейса — по умолчанию
+     * JavaFX берёт их из языка операционной системы. Также оформление и владелец окна.
+     */
+    public static void localize(javafx.scene.control.Dialog<?> dialog) {
+        javafx.scene.Node ok = dialog.getDialogPane().lookupButton(ButtonType.OK);
+        if (ok instanceof javafx.scene.control.Button b) b.setText(I18n.t("common.apply"));
+        javafx.scene.Node cancel = dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+        if (cancel instanceof javafx.scene.control.Button b) b.setText(I18n.t("common.cancel"));
+        if (Navigator.getStage() != null && Navigator.getStage().getScene() != null) {
+            dialog.initOwner(Navigator.getStage());
+            dialog.getDialogPane().getStylesheets().addAll(Navigator.getStage().getScene().getStylesheets());
+        }
+    }
+
+    private static void prepare(Alert alert, String title) {
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        // длинный текст переносится, окно растёт по высоте
+        alert.getDialogPane().setPrefWidth(480);
+        alert.getDialogPane().setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        alert.setResizable(true);
+        if (Navigator.getStage() != null && Navigator.getStage().getScene() != null) {
+            alert.initOwner(Navigator.getStage());
+            alert.getDialogPane().getStylesheets().addAll(Navigator.getStage().getScene().getStylesheets());
+        }
+    }
+}

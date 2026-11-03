@@ -1,0 +1,94 @@
+package by.bsuir.touragency.client.view.manager;
+
+import by.bsuir.touragency.client.util.Alerts;
+import by.bsuir.touragency.client.util.I18n;
+import by.bsuir.touragency.client.util.Ui;
+import javafx.collections.FXCollections;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+
+import java.util.List;
+import java.util.function.Consumer;
+
+/**
+ * Таблица с панелью инструментов: кнопки «Добавить / Изменить» и т.п.
+ * Используется во всех разделах управления.
+ *
+ * @param <T> тип строки
+ */
+public class TablePanel<T> extends VBox {
+
+    private final TableView<T> table = new TableView<>();
+    private final HBox toolbar = new HBox(10);
+    private final HBox extra = new HBox(10);
+
+    public TablePanel() {
+        super(14);
+        getStyleClass().addAll("card", "table-card");
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setPlaceholder(new Label(I18n.t("common.empty")));
+        table.setPrefHeight(560);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        toolbar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        extra.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        toolbar.getChildren().addAll(extra, Ui.hSpacer());
+        getChildren().addAll(toolbar, table);
+    }
+
+    public TableView<T> table() {
+        return table;
+    }
+
+    /** Элементы слева (поиск, фильтры). */
+    public TablePanel<T> left(Node... nodes) {
+        extra.getChildren().addAll(nodes);
+        return this;
+    }
+
+    /** Кнопка действия над выбранной строкой; без выбора показывает подсказку. */
+    public Button action(String text, String styleClass, Consumer<T> onSelected) {
+        Button b = new Button(text);
+        b.getStyleClass().add(styleClass);
+        b.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        b.setOnAction(e -> {
+            T selected = table.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                Alerts.info(I18n.t("common.selectRow"));
+            } else {
+                onSelected.accept(selected);
+            }
+        });
+        toolbar.getChildren().add(b);
+        return b;
+    }
+
+    /** Кнопка, не зависящая от выбора (например, «Добавить»). */
+    public Button button(String text, String styleClass, Runnable onClick) {
+        Button b = new Button(text);
+        b.getStyleClass().add(styleClass);
+        b.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        b.setOnAction(e -> onClick.run());
+        toolbar.getChildren().add(b);
+        return b;
+    }
+
+    /** Двойной щелчок по строке. */
+    public void onDoubleClick(Consumer<T> action) {
+        table.setRowFactory(tv -> {
+            javafx.scene.control.TableRow<T> row = new javafx.scene.control.TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2 && !row.isEmpty()) action.accept(row.getItem());
+            });
+            return row;
+        });
+    }
+
+    public void setItems(List<T> items) {
+        table.setItems(FXCollections.observableArrayList(items));
+    }
+}

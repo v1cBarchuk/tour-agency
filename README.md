@@ -10,6 +10,35 @@
 - MySQL 8 и MySQL Workbench
 - Интернет при первой сборке (Maven и библиотеки скачаются автоматически)
 
+
+
+## Скриншоты
+
+### Вход в систему
+![Вход в систему](client/src/main/resources/images/shot_s_login.png)
+
+### Главная страница
+![Главная страница](client/src/main/resources/images/shot_s_home.png)
+
+### Каталог туров
+![Каталог туров](client/src/main/resources/images/shot_s_tours.png)
+
+### Каталог туров (English)
+![Tours EN](client/src/main/resources/images/shot_s_tours_en.png)
+
+### Страница тура
+![Страница тура](client/src/main/resources/images/shot_s_details.png)
+
+### Страна и отели
+![Страна](client/src/main/resources/images/shot_s_country.png)
+![Отели](client/src/main/resources/images/shot_s_hotels.png)
+
+### Управление турами (менеджер)
+![Управление турами](client/src/main/resources/images/shot_s_mtours.png)
+
+### Редактирование скидки
+![Скидка](client/src/main/resources/images/shot_s_discdlg.png)
+
 ## Структура
 
 ```

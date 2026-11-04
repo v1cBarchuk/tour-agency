@@ -59,11 +59,25 @@ public class MyBookingsView extends BaseView {
         VBox page = new VBox(20, pageHeader(t("bk.title"), t("bk.subtitle")), a, active, p, past);
         page.getStyleClass().add("page");
         reload();
+        // новый статус, выставленный менеджером, появляется сам — без перехода в другой раздел
+        by.bsuir.touragency.client.util.Ui.autoRefresh(page, 10,
+                () -> Async.<ArrayList<Booking>>quiet(new Request(CommandType.GET_MY_BOOKINGS), this::show));
         return page;
     }
 
+    private Object lastSignature;
+
     private void reload() {
-        Async.<ArrayList<Booking>>load(new Request(CommandType.GET_MY_BOOKINGS), list -> {
+        lastSignature = null;
+        Async.<ArrayList<Booking>>load(new Request(CommandType.GET_MY_BOOKINGS), this::show);
+    }
+
+    private void show(ArrayList<Booking> list) {
+        Object signature = list.stream().map(b -> b.getId() + ":" + b.getStatus() + ":" + b.getPaidAmount()
+                + ":" + b.canReview()).toList();
+        if (signature.equals(lastSignature)) return;   // ничего не изменилось — не перестраиваем страницу
+        lastSignature = signature;
+        {
             active.getChildren().clear();
             past.getChildren().clear();
             for (Booking b : list) {
@@ -82,7 +96,7 @@ public class MyBookingsView extends BaseView {
                 none.getStyleClass().add("muted");
                 past.getChildren().add(none);
             }
-        });
+        }
     }
 
     private Node card(Booking b) {

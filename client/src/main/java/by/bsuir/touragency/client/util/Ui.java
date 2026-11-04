@@ -26,6 +26,20 @@ import java.util.function.Function;
  */
 public final class Ui {
 
+    /**
+     * Периодически выполняет action, пока узел показан на экране. Когда раздел закрывают
+     * (узел убирается из сцены), таймер останавливается сам — лишних запросов нет.
+     */
+    public static void autoRefresh(Node node, double seconds, Runnable action) {
+        javafx.animation.Timeline timer = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(seconds), e -> action.run()));
+        timer.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        node.sceneProperty().addListener((obs, old, scene) -> {
+            if (scene == null) timer.stop(); else timer.play();
+        });
+        if (node.getScene() != null) timer.play();
+    }
+
     private Ui() {
     }
 

@@ -57,6 +57,29 @@ public final class Alerts {
         }
     }
 
+    /**
+     * Короткое всплывающее сообщение в правом нижнем углу окна; исчезает само через 4 с
+     * и не требует нажатия «ОК» (подтверждение действия, новое уведомление).
+     */
+    public static void toast(String message) {
+        javafx.stage.Stage stage = Navigator.getStage();
+        if (stage == null || !stage.isShowing()) return;
+        javafx.scene.control.Label label = new javafx.scene.control.Label(message);
+        label.setWrapText(true);
+        label.setMaxWidth(360);
+        label.getStyleClass().add("toast");
+        if (stage.getScene() != null) label.getStylesheets().addAll(stage.getScene().getStylesheets());
+        javafx.stage.Popup popup = new javafx.stage.Popup();
+        popup.getContent().add(label);
+        popup.setAutoHide(true);
+        popup.show(stage);
+        popup.setX(stage.getX() + stage.getWidth() - label.getWidth() - 30);
+        popup.setY(stage.getY() + stage.getHeight() - label.getHeight() - 30);
+        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(4));
+        pause.setOnFinished(e -> popup.hide());
+        pause.play();
+    }
+
     private static void prepare(Alert alert, String title) {
         alert.setTitle(title);
         alert.setHeaderText(null);

@@ -103,7 +103,7 @@ public class JdbcBookingDao extends BaseDao implements BookingDao {
             p.add(like);
             p.add(f.search().trim().replace("#", ""));
         }
-        sql.append(f.userId() != null ? "ORDER BY (b.status_id IN (6, 7)), t.start_date" : "ORDER BY b.created_at DESC");
+        sql.append(f.userId() != null ? "ORDER BY (b.status_id IN (6, 7)), t.start_date, b.booking_id" : "ORDER BY b.created_at DESC, b.booking_id DESC");
         return query(sql.toString(), JdbcBookingDao::map, p.toArray());
     }
 

@@ -28,7 +28,7 @@ import java.util.List;
 /** Пользователи (администратор): роли, блокировка, история действий. */
 public class UsersView extends BaseView {
 
-    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm");
     private final Shell shell;
     private TablePanel<User> panel;
     private ComboBox<Role> roleFilter;
@@ -60,11 +60,11 @@ public class UsersView extends BaseView {
         panel.action(t("us.history"), "btn-primary", u -> shell.open(new AuditView(u)));
 
         var table = panel.table();
-        table.getColumns().add(Ui.column(t("us.col.login"), User::getLogin, 110));
+        table.getColumns().add(Ui.column(t("us.col.login"), User::getLogin, 100));
         table.getColumns().add(Ui.column(t("us.col.name"), User::getFullName, 170));
-        table.getColumns().add(Ui.column(t("us.col.email"), User::getEmail, 190));
-        table.getColumns().add(Ui.column(t("us.col.role"), u -> t("role." + u.getRole().name()), 120));
-        TableColumn<User, Object> status = Ui.column(t("us.col.status"), u -> u, 120);
+        table.getColumns().add(Ui.column(t("us.col.email"), User::getEmail, 175));
+        table.getColumns().add(Ui.column(t("us.col.role"), u -> t("role." + u.getRole().name()), 125));
+        TableColumn<User, Object> status = Ui.column(t("us.col.status"), u -> u, 140);
         status.setCellFactory(c -> new TableCell<>() {
             @Override
             protected void updateItem(Object item, boolean empty) {
@@ -81,12 +81,22 @@ public class UsersView extends BaseView {
 
         VBox page = new VBox(20, pageHeader(t("us.title"), t("us.subtitle")), panel);
         page.getStyleClass().add("page");
+        panel.setChangeKey(u -> u.getId() + ":" + u.getRole() + ":" + u.isBlocked() + ":" + u.getBookingsCount()
+                + ":" + u.getLastLogin());
         reload();
+        Ui.autoRefresh(page, 15, this::refreshQuietly);
         return page;
     }
 
     private void reload() {
         Async.<ArrayList<User>>load(new Request(CommandType.GET_USERS), users -> {
+            all = users;
+            filter();
+        });
+    }
+
+    private void refreshQuietly() {
+        Async.<ArrayList<User>>quiet(new Request(CommandType.GET_USERS), users -> {
             all = users;
             filter();
         });

@@ -102,7 +102,7 @@ public class JdbcUserDao extends BaseDao implements UserDao {
              PreparedStatement ps = pc.get().prepareStatement(SELECT_FIELDS.replace("FROM users ",
                      ", (SELECT COUNT(*) FROM bookings b WHERE b.user_id = users.user_id) bookings_count, "
                      + "(SELECT MAX(a.created_at) FROM audit_log a WHERE a.user_id = users.user_id "
-                     + "AND a.action = 'LOGIN') last_login FROM users ") + "ORDER BY role_id, full_name");
+                     + "AND a.action = 'LOGIN') last_login FROM users ") + "ORDER BY role_id, full_name, user_id");
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 User u = mapUser(rs);

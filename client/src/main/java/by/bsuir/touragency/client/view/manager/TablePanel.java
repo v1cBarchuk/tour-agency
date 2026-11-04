@@ -14,6 +14,7 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Таблица с панелью инструментов: кнопки «Добавить / Изменить» и т.п.
@@ -88,7 +89,28 @@ public class TablePanel<T> extends VBox {
         });
     }
 
+    private Function<T, Object> changeKey;
+    private Object lastSignature;
+
+    /**
+     * Ключ, по которому определяется, изменилась ли запись (например, id + статус).
+     * Нужен для автообновления: таблица перерисовывается только при реальных изменениях.
+     */
+    public void setChangeKey(Function<T, Object> key) {
+        this.changeKey = key;
+    }
+
     public void setItems(List<T> items) {
+        if (changeKey != null) {
+            Object signature = items.stream().map(changeKey).toList();
+            if (signature.equals(lastSignature)) return;
+            lastSignature = signature;
+        }
+        T selected = table.getSelectionModel().getSelectedItem();
         table.setItems(FXCollections.observableArrayList(items));
+        if (selected != null) table.getSelectionModel().select(selected);   // строка остаётся выбранной
+        // модели сравниваются по id, поэтому JavaFX не перерисовывает ячейки обновлённой записи
+        // (например, новый статус заявки) — перерисовываем таблицу явно
+        table.refresh();
     }
 }

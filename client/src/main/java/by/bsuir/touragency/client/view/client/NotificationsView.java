@@ -49,18 +49,30 @@ public class NotificationsView extends BaseView {
                 by.bsuir.touragency.client.util.Ui.hSpacer(), readAll), list);
         page.getStyleClass().add("page");
         reload();
+        by.bsuir.touragency.client.util.Ui.autoRefresh(page, 10,
+                () -> Async.<ArrayList<Notification>>quiet(new Request(CommandType.GET_NOTIFICATIONS), this::show));
         return page;
     }
 
+    private Object lastSignature;
+
     private void reload() {
-        Async.<ArrayList<Notification>>load(new Request(CommandType.GET_NOTIFICATIONS), items -> {
+        lastSignature = null;
+        Async.<ArrayList<Notification>>load(new Request(CommandType.GET_NOTIFICATIONS), this::show);
+    }
+
+    private void show(ArrayList<Notification> items) {
+        Object signature = items.stream().map(n -> n.id() + ":" + n.read()).toList();
+        if (signature.equals(lastSignature)) return;
+        lastSignature = signature;
+        {
             list.getChildren().clear();
             if (items.isEmpty()) {
                 list.getChildren().add(new EmptyState("✉", t("notif.empty"), t("notif.emptyHint")));
             }
             items.forEach(n -> list.getChildren().add(row(n)));
             onChanged.run();
-        });
+        }
     }
 
     private Node row(Notification n) {

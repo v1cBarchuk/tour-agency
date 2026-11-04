@@ -66,7 +66,7 @@ public class StatusTimeline extends HBox {
         Label name = new Label(Texts.status(status));
         name.getStyleClass().add(current ? "timeline-label-current" : "timeline-label");
         name.setWrapText(true);
-        name.setMaxWidth(96);
+        name.setMaxWidth(118);
         name.setAlignment(Pos.CENTER);
         name.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
         VBox box = new VBox(4, dot, name);
@@ -77,7 +77,7 @@ public class StatusTimeline extends HBox {
         });
         box.setAlignment(Pos.TOP_CENTER);
         box.setMinWidth(80);
-        box.setMaxWidth(100);
+        box.setMaxWidth(120);
         return box;
     }
 }

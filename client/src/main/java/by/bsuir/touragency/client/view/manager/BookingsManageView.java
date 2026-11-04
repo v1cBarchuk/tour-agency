@@ -74,13 +74,13 @@ public class BookingsManageView extends BaseView {
         var table = panel.table();
         table.getColumns().add(Ui.column(t("bm.col.id"), b -> "#" + b.getId(), 50));
         table.getColumns().add(Ui.column(t("bm.col.client"), Booking::getClientName, 130));
-        table.getColumns().add(Ui.column(t("bm.col.tour"), b -> b.getHotelName() + " · " + b.getLocation(), 160));
+        table.getColumns().add(Ui.column(t("bm.col.tour"), b -> b.getHotelName() + " · " + b.getLocation(), 150));
         table.getColumns().add(Ui.column(t("bm.col.dates"), b -> Fmt.dateRange(b.getStartDate(), b.getEndDate()), 172));
         table.getColumns().add(Ui.column(t("bm.col.persons"), Booking::getPersonsCount, 46));
         table.getColumns().add(Ui.column(t("bm.col.total"), b -> Fmt.number(b.getTotalPrice()), 80));
         table.getColumns().add(Ui.column(t("bm.col.created"),
                 b -> b.getCreatedAt() == null ? "" : b.getCreatedAt().format(TIME), 80));
-        TableColumn<Booking, Object> st = Ui.column(t("bm.col.status"), b -> b, 190);
+        TableColumn<Booking, Object> st = Ui.column(t("bm.col.status"), b -> b, 205);
         st.setCellFactory(c -> new TableCell<>() {
             @Override
             protected void updateItem(Object item, boolean empty) {
@@ -97,14 +97,25 @@ public class BookingsManageView extends BaseView {
 
         VBox page = new VBox(20, pageHeader(t("bm.title"), t("bm.subtitle")), panel);
         page.getStyleClass().add("page");
+        panel.setChangeKey(b -> b.getId() + ":" + b.getStatus() + ":" + b.getPaidAmount());
         reload();
+        // заявки, созданные клиентами и изменённые другими менеджерами, появляются без перезахода в раздел
+        Ui.autoRefresh(page, 10, this::refreshQuietly);
         return page;
     }
 
-    private void reload() {
+    private Request listRequest() {
         BookingStatus s = status.getValue();
-        Async.<ArrayList<Booking>>load(new Request(CommandType.GET_BOOKINGS)
-                .with("status", s == null ? null : s.name()).with("search", search.getText()), panel::setItems);
+        return new Request(CommandType.GET_BOOKINGS).with("status", s == null ? null : s.name())
+                .with("search", search.getText());
+    }
+
+    private void reload() {
+        Async.<ArrayList<Booking>>load(listRequest(), panel::setItems);
+    }
+
+    private void refreshQuietly() {
+        Async.<ArrayList<Booking>>quiet(listRequest(), panel::setItems);
     }
 
     private void details(Booking b) {
@@ -132,6 +143,7 @@ public class BookingsManageView extends BaseView {
                     .with("status", target.name()), r -> {
                 if (r.isOk()) {
                     reload();
+                    Alerts.toast(I18n.t("bm.changed", b.getId(), Texts.status(target)));
                 } else {
                     Alerts.error(r.getMessage());
                 }

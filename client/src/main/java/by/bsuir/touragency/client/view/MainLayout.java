@@ -234,18 +234,26 @@ public class MainLayout extends BaseView implements Shell {
                     bellMenu.show(bell, javafx.geometry.Side.BOTTOM, -260, 6);
                 }));
         refreshBell();
-        bellTimer = new Timeline(new KeyFrame(Duration.seconds(30), e -> refreshBell()));
+        bellTimer = new Timeline(new KeyFrame(Duration.seconds(10), e -> refreshBell()));
         bellTimer.setCycleCount(Animation.INDEFINITE);
         bellTimer.play();
         return bell;
     }
 
     /** Обновить счётчик непрочитанных уведомлений. */
+    private long lastNotificationId = -1;   // -1 — первая загрузка, всплывающих сообщений нет
+
     public void refreshBell() {
         if (bellCount == null) return;
         Async.send(new Request(CommandType.GET_NOTIFICATIONS), r -> {
             if (!r.isOk()) return;
             java.util.ArrayList<Notification> list = r.getData();
+            long maxId = list.stream().mapToLong(Notification::id).max().orElse(0);
+            if (lastNotificationId >= 0) {
+                list.stream().filter(n -> !n.read() && n.id() > lastNotificationId)
+                        .limit(2).forEach(n -> by.bsuir.touragency.client.util.Alerts.toast(Texts.notification(n)));
+            }
+            lastNotificationId = Math.max(lastNotificationId, maxId);
             long unread = list.stream().filter(n -> !n.read()).count();
             bellCount.setText(unread > 9 ? "9+" : String.valueOf(unread));
             bellCount.setVisible(unread > 0);

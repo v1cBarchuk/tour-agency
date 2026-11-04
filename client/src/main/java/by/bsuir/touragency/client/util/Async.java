@@ -40,6 +40,16 @@ public final class Async {
      * Запрос, у которого важен только успешный результат: данные передаются в onData,
      * сообщение об ошибке сервера показывается окном.
      */
+    /**
+     * Тихая загрузка для фонового автообновления: при ошибке сервера или соединения
+     * ничего не показывается, чтобы не засыпать пользователя окнами.
+     */
+    public static <T extends java.io.Serializable> void quiet(Request request, Consumer<T> onData) {
+        send(request, response -> {
+            if (response.isOk()) onData.accept(response.getData());
+        }, error -> { });
+    }
+
     public static <T extends java.io.Serializable> void load(Request request, Consumer<T> onData) {
         send(request, response -> {
             if (response.isOk()) {

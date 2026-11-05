@@ -36,7 +36,19 @@ public final class ClientContext {
         reference = data;
     }
 
+    /** Сколько туристов клиент указал в последнем поиске — для предупреждения о нехватке мест. */
+    private static Integer desiredPersons;
+
+    public static Integer getDesiredPersons() {
+        return desiredPersons;
+    }
+
+    public static void setDesiredPersons(Integer persons) {
+        desiredPersons = persons == null || persons < 1 ? null : persons;
+    }
+
     public static void clear() {
+        desiredPersons = null;
         user = null;
         reference = null;
     }

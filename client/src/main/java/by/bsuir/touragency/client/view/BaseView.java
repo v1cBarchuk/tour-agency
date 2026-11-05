@@ -32,6 +32,11 @@ public abstract class BaseView {
         return this;
     }
 
+    /** Сбросить построенный интерфейс: при следующем показе страница построится заново (смена валюты). */
+    public void invalidate() {
+        root = null;
+    }
+
     protected static String t(String key) {
         return I18n.t(key);
     }

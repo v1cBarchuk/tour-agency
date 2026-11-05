@@ -44,6 +44,43 @@ public final class Ui {
     }
 
     /** Поле формы: подпись сверху, элемент управления снизу. */
+    /**
+     * «Липкий» блок (аналог position: sticky; top: N): при прокрутке страницы блок остаётся
+     * у верхнего края окна, но не выходит за пределы своего контейнера.
+     */
+    public static void sticky(javafx.scene.layout.Region block, javafx.scene.layout.Region container, double top) {
+        Runnable update = () -> {
+            javafx.scene.control.ScrollPane scroll = findScroll(container);
+            if (scroll == null || block.getScene() == null) return;
+            double containerInViewport = container.localToScene(0, 0).getY() - scroll.localToScene(0, 0).getY();
+            double hidden = -containerInViewport;                       // часть контейнера, ушедшая вверх
+            double max = Math.max(0, container.getHeight() - block.getHeight() - block.getLayoutY());
+            block.setTranslateY(Math.max(0, Math.min(hidden + top - block.getLayoutY(), max)));
+        };
+        block.sceneProperty().addListener((o, old, scene) -> {
+            if (scene == null) return;
+            javafx.application.Platform.runLater(() -> {
+                javafx.scene.control.ScrollPane scroll = findScroll(container);
+                if (scroll == null) return;
+                scroll.vvalueProperty().addListener((x, a, b) -> update.run());
+                scroll.viewportBoundsProperty().addListener((x, a, b) -> update.run());
+                container.heightProperty().addListener((x, a, b) -> update.run());
+                update.run();
+            });
+        });
+    }
+
+    private static javafx.scene.control.ScrollPane findScroll(Node node) {
+        for (javafx.scene.Parent p = node.getParent(); p != null; p = p.getParent()) {
+            if (p instanceof javafx.scene.control.ScrollPane sp) return sp;
+        }
+        // содержимое ScrollPane лежит в его скине, поэтому ищем по классу в предках-скинах
+        for (Node n = node; n != null; n = n.getParent()) {
+            if (n.getStyleClass().contains("content-scroll") && n instanceof javafx.scene.control.ScrollPane sp) return sp;
+        }
+        return null;
+    }
+
     public static VBox field(String label, Node control) {
         Label l = new Label(label);
         l.getStyleClass().add("field-label");

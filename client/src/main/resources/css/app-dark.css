@@ -1,0 +1,176 @@
+/* ==========================================================================
+   Voyago — тёмная тема. Подключается поверх app.css и меняет только цвета.
+   ========================================================================== */
+.root { -fx-background-color: #0f171c; -fx-focus-color: #2aa3b5; -fx-faint-focus-color: rgba(42,163,181,0.2); }
+
+.label, .kpi-value, .ad-title, .table-row-cell .table-cell, .table-row-cell:selected .table-cell { -fx-text-fill: #e3eaee; }
+.muted, .page-subtitle, .field-label, .card-info, .timeline-label, .kpi-label, .lang-button,
+.table-view .column-header .label, .tabs .tab .tab-label, .ad-text, .notif-text, .body-text { -fx-text-fill: #9aabb6; }
+.card-overline, .price, .price-small, .price-large, .link-strong, .hyperlink, .btn-ghost,
+.timeline-label-current, .tabs .tab:selected .tab-label { -fx-text-fill: #5cc6d6; }
+
+/* фон страниц и панелей */
+.content, .content-scroll, .content-scroll > .viewport, .report { -fx-background-color: #0f171c; }
+.topbar { -fx-background-color: #162229; -fx-border-color: transparent transparent #24343d transparent; }
+.auth-side { -fx-background-color: #162229; }
+.card, .search-panel, .match-why, .edit-dialog, .dialog-content, .edit-dialog > .content,
+.edit-dialog > .button-bar > .container, .dialog-pane, .dialog-pane > .content, .dialog-pane > .button-bar > .container {
+    -fx-background-color: #18252c; -fx-border-color: #24343d;
+}
+.dialog-pane .header-panel { -fx-background-color: #1d2c34; }
+.dialog-pane .header-panel .label, .dialog-pane .content.label { -fx-text-fill: #e3eaee; }
+.demo-hint, .formula { -fx-background-color: #1d2c34; -fx-text-fill: #9aabb6; }
+.cta-card { -fx-background-color: linear-gradient(to right, #17323a, #2c2419); }
+
+/* поля ввода */
+.text-field, .password-field, .text-area, .combo-box, .date-picker, .spinner {
+    -fx-background-color: #101b21; -fx-border-color: #2b3d47; -fx-text-fill: #e3eaee; -fx-prompt-text-fill: #6c7f8a;
+}
+.text-area .content { -fx-background-color: #101b21; }
+.combo-box .list-cell { -fx-text-fill: #e3eaee; -fx-background-color: transparent; }
+.combo-box-popup .list-view, .context-menu { -fx-background-color: #18252c; }
+.combo-box-popup .list-view .list-cell { -fx-background-color: #18252c; -fx-text-fill: #e3eaee; }
+.combo-box-popup .list-view .list-cell:hover, .combo-box-popup .list-view .list-cell:selected { -fx-background-color: #24414b; }
+.context-menu .menu-item .label { -fx-text-fill: #e3eaee; }
+.context-menu .menu-item:focused { -fx-background-color: #24414b; }
+
+/* кнопки */
+.btn-outline { -fx-background-color: #18252c; -fx-border-color: #34495a; -fx-text-fill: #e3eaee; }
+.btn-outline:hover { -fx-background-color: #20323b; -fx-border-color: #5cc6d6; }
+.btn-danger { -fx-background-color: #18252c; -fx-border-color: #6b2c2c; -fx-text-fill: #ff8a80; }
+.btn-danger:hover { -fx-background-color: #2a1c1f; }
+.btn-ghost:hover { -fx-background-color: #20323b; }
+.btn-primary { -fx-background-color: #1584a0; }
+.btn-primary:hover { -fx-background-color: #1a99b8; }
+.lang-switch, .theme-switch { -fx-background-color: #101b21; }
+.lang-button:selected { -fx-background-color: #24414b; -fx-text-fill: #e3eaee; }
+.theme-switch { -fx-text-fill: #f5c542; }
+.theme-switch:hover { -fx-background-color: #20323b; }
+.chip-button, .choice-chip { -fx-background-color: #1d2c34; -fx-text-fill: #9fdbe5; -fx-border-color: #2b3d47; }
+.chip-button:hover, .choice-chip:hover { -fx-background-color: #24414b; }
+.choice-chip:selected { -fx-background-color: #1584a0; -fx-border-color: #1584a0; -fx-text-fill: white; }
+
+/* значки и мелкие элементы */
+.why-icon, .empty-icon, .kpi-icon, .tourist-no, .bell-icon { -fx-background-color: #1f3a43; -fx-text-fill: #5cc6d6; }
+.bell:hover .bell-icon { -fx-background-color: #24414b; }
+.badge-neutral { -fx-background-color: #24343d; -fx-text-fill: #c7d3da; }
+.badge-success { -fx-background-color: #173a24; -fx-text-fill: #7bd88f; }
+.badge-warning { -fx-background-color: #3b2a14; -fx-text-fill: #ffb366; }
+.badge-danger { -fx-background-color: #3b1c1c; -fx-text-fill: #ff8a80; }
+.discount-why { -fx-background-color: #173a24; -fx-text-fill: #9be7ab; }
+.alert-card { -fx-background-color: #3b2a14; -fx-border-color: #6b4a20; }
+.info-card { -fx-background-color: #173a24; -fx-border-color: #2b6a3a; }
+.fav-button { -fx-background-color: #18252c; }
+.fav-on { -fx-background-color: #3b1c1c; }
+.timeline-dot.todo, .timeline-line.todo, .score-bar .track, .wizard-progress .track { -fx-background-color: #2b3d47; }
+.reason-ok { -fx-text-fill: #7bd88f; }
+.reason-diff { -fx-text-fill: #ffb366; }
+
+/* таблицы */
+.table-view, .table-view .column-header-background, .table-view .filler { -fx-background-color: #162229; }
+.table-view .column-header, .table-view .filler { -fx-border-color: transparent transparent #24343d transparent; }
+.table-row-cell { -fx-background-color: #18252c; -fx-border-color: transparent transparent #1f2e36 transparent; }
+.table-row-cell:hover { -fx-background-color: #1d2e36; }
+.table-row-cell:selected { -fx-background-color: #24414b; }
+.table-row-cell.row-new { -fx-background-color: #33261a; }
+.table-row-cell.row-pending { -fx-background-color: #2a2419; }
+.table-row-cell.row-new:hover, .table-row-cell.row-pending:hover { -fx-background-color: #3d2e1d; }
+.table-row-cell.row-cancelled .table-cell { -fx-text-fill: #6c7f8a; }
+.tabs .tab:selected { -fx-background-color: #18252c; }
+.scroll-bar .thumb { -fx-background-color: #34495a; }
+.scroll-bar, .scroll-bar .track { -fx-background-color: transparent; }
+
+/* графики */
+.chart-plot-background { -fx-background-color: transparent; }
+.chart-vertical-grid-lines, .chart-horizontal-grid-lines { -fx-stroke: #24343d; }
+.axis, .axis-label, .chart-legend-item, .chart-title, .chart-pie-label { -fx-tick-label-fill: #9aabb6; -fx-text-fill: #9aabb6; -fx-fill: #9aabb6; }
+.chart-legend { -fx-background-color: transparent; }
+
+/* скелетоны, галерея, реклама */
+.skeleton { -fx-background-color: #24343d; }
+.ad-banner { -fx-background-color: linear-gradient(to right, #2c2419, #17323a); -fx-border-color: #6b4a20; }
+.ad-tag { -fx-background-color: #4a3015; -fx-text-fill: #ffb366; }
+.ad-icon { -fx-background-color: #18252c; }
+.empty-state .empty-title { -fx-text-fill: #e3eaee; }
+
+/* акцентные цвета текста поверх общего цвета .label */
+.error { -fx-text-fill: #ff7b72; }
+.btn-accent { -fx-text-fill: white; }
+.logo-light { -fx-text-fill: white; }
+.logo { -fx-text-fill: white; }
+.menu-item-active { -fx-text-fill: white; }
+.sidebar-user { -fx-text-fill: white; }
+.avatar { -fx-text-fill: white; }
+.hero-title { -fx-text-fill: white; }
+.stars { -fx-text-fill: #f5a623; }
+.seats-low { -fx-text-fill: #d9480f; }
+.rating-star { -fx-text-fill: #f5a623; }
+.placeholder-caption { -fx-text-fill: white; }
+.country-name { -fx-text-fill: white; }
+.badge-hot { -fx-text-fill: white; }
+.badge-new { -fx-text-fill: white; }
+.badge-popular { -fx-text-fill: white; }
+.badge-featured { -fx-text-fill: white; }
+.match-chip { -fx-text-fill: white; }
+.match-high-text { -fx-text-fill: #63c77a; }
+.match-mid-text { -fx-text-fill: #d9480f; }
+.match-low-text { -fx-text-fill: #9aabb6; }
+.discount-amount { -fx-text-fill: #63c77a; }
+.timeline-time { -fx-text-fill: #93a1ab; }
+.bell-count { -fx-text-fill: white; }
+.notif-icon { -fx-text-fill: white; }
+.unread-dot { -fx-text-fill: #e8590c; }
+.toast { -fx-text-fill: white; }
+.gallery-arrow { -fx-text-fill: #0b5c73; }
+.gallery-counter { -fx-text-fill: white; }
+
+/* стандартные диалоги JavaFX */
+.dialog-pane .content.label, .dialog-pane .grid-pane { -fx-background-color: transparent; }
+.dialog-pane .button-bar .button {
+    -fx-background-color: #20323b; -fx-text-fill: #e3eaee; -fx-background-radius: 8;
+    -fx-border-color: #34495a; -fx-border-radius: 8; -fx-padding: 8 18;
+}
+.dialog-pane .button-bar .button:hover { -fx-background-color: #24414b; }
+.dialog-pane .button-bar .button:default { -fx-background-color: #1584a0; -fx-border-color: #1584a0; -fx-text-fill: white; }
+.table-row-cell.row-new:selected, .table-row-cell.row-pending:selected,
+.table-row-cell.row-cancelled:selected { -fx-background-color: #24414b; }
+
+/* кнопки внутри полей: календарь, счётчики, выпадающие списки */
+.date-picker > .arrow-button, .spinner .increment-arrow-button, .spinner .decrement-arrow-button,
+.combo-box > .arrow-button { -fx-background-color: #1d2c34; }
+.date-picker > .arrow-button > .arrow, .spinner .increment-arrow-button > .increment-arrow,
+.spinner .decrement-arrow-button > .decrement-arrow, .combo-box > .arrow-button > .arrow { -fx-background-color: #9aabb6; }
+.date-picker > .text-field, .spinner > .text-field { -fx-background-color: transparent; -fx-text-fill: #e3eaee; }
+.date-picker-popup, .date-picker-popup > .month-year-pane, .date-picker-popup > * > .day-name-cell,
+.date-picker-popup > * > .date-cell { -fx-background-color: #18252c; -fx-text-fill: #e3eaee; }
+.date-picker-popup .label, .date-picker-popup .spinner .label { -fx-text-fill: #e3eaee; }
+.date-picker-popup > * > .date-cell:hover, .date-picker-popup > * > .selected { -fx-background-color: #24414b; }
+.date-picker-popup > * > .previous-month, .date-picker-popup > * > .next-month { -fx-text-fill: #6c7f8a; }
+
+.tour-card:hover, .hotel-card:hover { -fx-border-color: #3a5866; }
+.notif-row:hover { -fx-border-color: #34495a; }
+
+/* новые элементы: сравнение, погода, кабинет */
+.compare-button { -fx-background-color: #18252c; -fx-text-fill: #5cc6d6; }
+.compare-button:hover { -fx-background-color: #24414b; }
+.compare-on { -fx-background-color: #1584a0; -fx-text-fill: white; }
+.compare-cell { -fx-border-color: #24343d transparent transparent transparent; }
+.compare-odd { -fx-background-color: #1b2930; }
+.compare-best { -fx-background-color: #173a24; }
+.compare-best .fact-value { -fx-text-fill: #9be7ab; }
+.compare-best-mark { -fx-text-fill: #7bd88f; }
+.compare-bar { -fx-background-color: #24414b; }
+.price-old { -fx-text-fill: #6c7f8a; }
+.weather-day { -fx-text-fill: #9aabb6; }
+.weather-rain { -fx-text-fill: #74c0fc; }
+.weather-icon { -fx-text-fill: #ffb366; }
+.level-new { -fx-background-color: #24343d; -fx-text-fill: #c7d3da; }
+.level-regular { -fx-background-color: #1f3a43; -fx-text-fill: #5cc6d6; }
+.level-gold { -fx-background-color: #3b2a14; -fx-text-fill: #ffc861; }
+.check-box, .radio-button, .check-box .text, .radio-button .text { -fx-text-fill: #e3eaee; }
+.check-box .box { -fx-background-color: #101b21; -fx-border-color: #34495a; }
+.seats-warning { -fx-background-color: #3b2a14; -fx-border-color: #6b4a20; -fx-text-fill: #ffb366; }
+.card-warning { -fx-text-fill: #ff8a80; }
+.menu-item .label { -fx-text-fill: rgba(255,255,255,0.85); }
+.menu-item-active .label { -fx-text-fill: white; }
+.menu-item .menu-badge { -fx-text-fill: white; }

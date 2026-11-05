@@ -47,6 +47,7 @@ public final class Alerts {
      * JavaFX берёт их из языка операционной системы. Также оформление и владелец окна.
      */
     public static void localize(javafx.scene.control.Dialog<?> dialog) {
+        enterApplies(dialog);
         javafx.scene.Node ok = dialog.getDialogPane().lookupButton(ButtonType.OK);
         if (ok instanceof javafx.scene.control.Button b) b.setText(I18n.t("common.apply"));
         javafx.scene.Node cancel = dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
@@ -78,6 +79,29 @@ public final class Alerts {
         javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(4));
         pause.setOnFinished(e -> popup.hide());
         pause.play();
+    }
+
+    /**
+     * Enter в любом месте диалога нажимает основную кнопку (OK / «Применить»), даже если фокус
+     * в выпадающем списке — раньше список «съедал» Enter. В многострочном поле Enter переносит строку.
+     */
+    public static void enterApplies(javafx.scene.control.Dialog<?> dialog) {
+        dialog.getDialogPane().addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() != javafx.scene.input.KeyCode.ENTER) return;
+            javafx.scene.Node focus = dialog.getDialogPane().getScene().getFocusOwner();
+            if (focus instanceof javafx.scene.control.TextArea) return;
+            if (focus instanceof javafx.scene.control.ComboBoxBase<?> c && c.isShowing()) return;
+            javafx.scene.Node ok = dialog.getDialogPane().lookupButton(ButtonType.OK);
+            if (ok == null) {
+                ok = dialog.getDialogPane().getButtonTypes().stream()
+                        .filter(b -> b.getButtonData().isDefaultButton())
+                        .map(dialog.getDialogPane()::lookupButton).findFirst().orElse(null);
+            }
+            if (ok instanceof javafx.scene.control.Button b && !b.isDisabled()) {
+                b.fire();
+                e.consume();
+            }
+        });
     }
 
     private static void prepare(Alert alert, String title) {

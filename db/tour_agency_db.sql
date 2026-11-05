@@ -72,21 +72,25 @@ CREATE TABLE discounts (
     discount_id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
     name_ru             VARCHAR(80)  NOT NULL,
     name_en             VARCHAR(80)  NOT NULL,
-    discount_type       ENUM('SEASONAL', 'LOYALTY', 'EARLY_BOOKING') NOT NULL,
+    discount_type       ENUM('SEASONAL', 'LOYALTY', 'EARLY_BOOKING', 'PROMO_CODE') NOT NULL,
     percent             DECIMAL(5,2) NOT NULL,
     valid_from          DATE         NULL,
     valid_to            DATE         NULL,
     min_days_before     SMALLINT UNSIGNED NULL,
     min_completed_trips TINYINT UNSIGNED  NULL,
+    promo_code          VARCHAR(30)  NULL,              -- только для PROMO_CODE, без учёта регистра
+    max_uses            SMALLINT UNSIGNED NULL,         -- лимит использований промокода (NULL — без лимита)
     is_active           BOOLEAN      NOT NULL DEFAULT TRUE,
     PRIMARY KEY (discount_id),
+    UNIQUE KEY uq_discounts_promo (promo_code),
     CONSTRAINT chk_discounts_percent CHECK (percent > 0 AND percent < 100),
     CONSTRAINT chk_discounts_period  CHECK (valid_to IS NULL OR valid_from IS NULL
                                             OR valid_to >= valid_from),
     CONSTRAINT chk_discounts_params  CHECK (
         (discount_type = 'SEASONAL'      AND valid_from IS NOT NULL AND valid_to IS NOT NULL) OR
         (discount_type = 'EARLY_BOOKING' AND min_days_before IS NOT NULL) OR
-        (discount_type = 'LOYALTY'       AND min_completed_trips IS NOT NULL))
+        (discount_type = 'LOYALTY'       AND min_completed_trips IS NOT NULL) OR
+        (discount_type = 'PROMO_CODE'    AND promo_code IS NOT NULL))
 ) ENGINE = InnoDB;
 
 -- Системные настройки (курс валют, параметры штрафов и т.п.)
@@ -110,6 +114,7 @@ CREATE TABLE countries (
     description_ru TEXT         NULL,
     description_en TEXT         NULL,
     image_path     VARCHAR(255) NULL,
+    visa_free      BOOLEAN      NOT NULL DEFAULT FALSE,  -- въезд без визы для граждан РБ (фильтр «Без визы»)
     PRIMARY KEY (country_id),
     UNIQUE KEY uq_countries_name_ru (name_ru),
     UNIQUE KEY uq_countries_name_en (name_en)
@@ -121,6 +126,8 @@ CREATE TABLE cities (
     name_ru     VARCHAR(80)  NOT NULL,
     name_en     VARCHAR(80)  NOT NULL,
     image_path  VARCHAR(255) NULL,
+    latitude    DECIMAL(8,5) NULL,                       -- координаты для прогноза погоды
+    longitude   DECIMAL(8,5) NULL,
     PRIMARY KEY (city_id),
     UNIQUE KEY uq_cities_country_name (country_id, name_ru),
     CONSTRAINT fk_cities_country FOREIGN KEY (country_id)
@@ -183,6 +190,9 @@ CREATE TABLE users (
     email         VARCHAR(120)     NOT NULL,
     phone         VARCHAR(20)      NULL,
     language      ENUM('RU', 'EN') NOT NULL DEFAULT 'RU',
+    birth_date    DATE             NULL,               -- личный кабинет
+    home_city     VARCHAR(80)      NULL,               -- город вылета
+    notify_price_drop BOOLEAN      NOT NULL DEFAULT TRUE, -- уведомлять о снижении цен на избранное
     is_blocked    BOOLEAN          NOT NULL DEFAULT FALSE,
     created_at    DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id),
@@ -308,6 +318,41 @@ CREATE TABLE favorites (
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
+-- История цен тура: по ней клиентам из «Избранного» приходит уведомление о снижении цены,
+-- а в карточке показывается прежняя цена
+CREATE TABLE tour_price_history (
+    history_id  INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    tour_id     INT UNSIGNED  NOT NULL,
+    old_price   DECIMAL(10,2) NOT NULL,
+    new_price   DECIMAL(10,2) NOT NULL,
+    changed_by  INT UNSIGNED  NULL,
+    changed_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (history_id),
+    KEY idx_price_history_tour (tour_id, changed_at),
+    CONSTRAINT fk_price_history_tour FOREIGN KEY (tour_id)
+        REFERENCES tours (tour_id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_price_history_user FOREIGN KEY (changed_by)
+        REFERENCES users (user_id)
+        ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE = InnoDB;
+
+-- Недавно просмотренные туры (карусель на главной и в личном кабинете)
+CREATE TABLE tour_views (
+    user_id     INT UNSIGNED NOT NULL,
+    tour_id     INT UNSIGNED NOT NULL,
+    viewed_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    views_count INT UNSIGNED NOT NULL DEFAULT 1,
+    PRIMARY KEY (user_id, tour_id),
+    KEY idx_tour_views_recent (user_id, viewed_at),
+    CONSTRAINT fk_tour_views_user FOREIGN KEY (user_id)
+        REFERENCES users (user_id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_tour_views_tour FOREIGN KEY (tour_id)
+        REFERENCES tours (tour_id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE = InnoDB;
+
 -- ---------------------------------------------------------------------
 -- 5. Бронирования
 -- ---------------------------------------------------------------------
@@ -420,7 +465,7 @@ CREATE TABLE reviews (
 CREATE TABLE notifications (
     notification_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     user_id         INT UNSIGNED NOT NULL,
-    type            ENUM('NEW_MATCHING_TOUR', 'DISCOUNT_OFFER', 'BOOKING_STATUS', 'SYSTEM') NOT NULL,
+    type            ENUM('NEW_MATCHING_TOUR', 'DISCOUNT_OFFER', 'BOOKING_STATUS', 'PRICE_DROP', 'SYSTEM') NOT NULL,
     tour_id         INT UNSIGNED NULL,
     booking_id      INT UNSIGNED NULL,
     message         VARCHAR(300) NULL,
@@ -510,7 +555,8 @@ INSERT INTO settings (setting_key, setting_value, description) VALUES
     ('tour.hot.days',        '14',   'Тур «горящий», если до начала не более N дней'),
     ('tour.new.days',        '10',   'Тур «новинка», если добавлен не более N дней назад'),
     ('tour.popular.bookings', '2',   'Тур «популярный», если у него не меньше N бронирований'),
-    ('match.notify.percent', '60',   'Уведомлять клиента о новом туре, если совпадение не ниже N%');
+    ('match.notify.percent', '60',   'Уведомлять клиента о новом туре, если совпадение не ниже N%'),
+    ('tour.almostSold.percent', '80', 'Метка «Почти распродан», если занято больше N% мест');
 
 -- Администратор по умолчанию: логин admin, пароль admin123
 INSERT INTO users (user_id, role_id, login, password_hash, salt, full_name, email)

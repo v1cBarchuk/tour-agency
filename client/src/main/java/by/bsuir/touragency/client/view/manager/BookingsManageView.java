@@ -53,6 +53,7 @@ public class BookingsManageView extends BaseView {
         status.setPrefWidth(210);
         status.setOnAction(e -> reload());
         search = new TextField();
+        search.getStyleClass().add("search-field");   // Ctrl+F
         search.setPromptText(t("bm.search"));
         search.setPrefWidth(230);
         PauseTransition debounce = new PauseTransition(Duration.millis(350));
@@ -98,6 +99,13 @@ public class BookingsManageView extends BaseView {
         VBox page = new VBox(20, pageHeader(t("bm.title"), t("bm.subtitle")), panel);
         page.getStyleClass().add("page");
         panel.setChangeKey(b -> b.getId() + ":" + b.getStatus() + ":" + b.getPaidAmount());
+        // новые и ожидающие подтверждения заявки выделяются цветом всей строки
+        panel.setRowStyle(b -> switch (b.getStatus()) {
+            case NEW -> "row-new";
+            case PENDING_CONFIRMATION -> "row-pending";
+            case CANCELLED -> "row-cancelled";
+            default -> null;
+        });
         reload();
         // заявки, созданные клиентами и изменённые другими менеджерами, появляются без перезахода в раздел
         Ui.autoRefresh(page, 10, this::refreshQuietly);

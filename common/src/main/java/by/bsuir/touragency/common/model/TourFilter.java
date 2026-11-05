@@ -28,7 +28,14 @@ public class TourFilter implements Serializable {
     private Integer mealTypeId;
     private Integer persons;          // нужно столько свободных мест
     private String search;            // по названию тура/отеля (для менеджера)
-    private boolean onlyAvailable = true;   // активные, будущие, есть места
+    private boolean onlyAvailable = true;
+    private boolean onlyHot;          // вылет в ближайшие дни (настройка tour.hot.days)
+    private boolean onlyVisaFree;     // страны без визы
+
+    public boolean isOnlyHot() { return onlyHot; }
+    public TourFilter setOnlyHot(boolean v) { onlyHot = v; return this; }
+    public boolean isOnlyVisaFree() { return onlyVisaFree; }
+    public TourFilter setOnlyVisaFree(boolean v) { onlyVisaFree = v; return this; }   // активные, будущие, есть места
     private Sort sort = Sort.DATE;
 
     public Integer getCountryId() { return countryId; }

@@ -18,14 +18,15 @@ import java.util.function.Consumer;
 public class CountryCard extends StackPane {
 
     public CountryCard(Country country, double width, double height, Consumer<Country> onOpen) {
-        getStyleClass().addAll("card", "country-card");
+        getStyleClass().addAll("card", "country-card", "grid-item");
         setPrefSize(width, height);
-        setMaxSize(width, height);
+        setMinHeight(height);
+        setMaxSize(Double.MAX_VALUE, height);
         setCursor(Cursor.HAND);
 
         Region shade = new Region();
         shade.getStyleClass().add("country-shade");
-        shade.setMaxSize(width, height);
+        shade.setMaxSize(Double.MAX_VALUE, height);
 
         Label name = new Label(country.getName());
         name.getStyleClass().add("country-name");
@@ -35,9 +36,9 @@ public class CountryCard extends StackPane {
         VBox text = new VBox(2, name, stats);
         text.setPadding(new Insets(16));
         text.setAlignment(Pos.BOTTOM_LEFT);
-        text.setMaxSize(width, height);
+        text.setMaxSize(Double.MAX_VALUE, height);
 
-        getChildren().addAll(Images.cover(country.getImagePath(), null, width, height, 16), shade, text);
+        getChildren().addAll(new FluidCover(country.getImagePath(), null, height, 16), shade, text);
         setOnMouseClicked(e -> onOpen.accept(country));
     }
 }

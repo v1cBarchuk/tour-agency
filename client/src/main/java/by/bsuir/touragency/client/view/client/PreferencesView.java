@@ -130,7 +130,7 @@ public class PreferencesView extends BaseView {
 
         VBox card = new VBox(16, stepCounter, progress, stepTitle, stepHint, stepBody, buttons);
         card.getStyleClass().addAll("card", "wizard");
-        card.setMaxWidth(860);
+        card.setMaxWidth(1080);
         show(0);
         return card;
     }

@@ -20,4 +20,14 @@ public class EmptyState extends VBox {
         h.setWrapText(true);
         getChildren().addAll(i, t, h);
     }
+
+    /** Кнопка-подсказка «что сделать дальше» (например, «Изменить анкету»). */
+    public EmptyState action(String text, Runnable onClick) {
+        javafx.scene.control.Button b = new javafx.scene.control.Button(text);
+        b.getStyleClass().add("btn-primary");
+        b.setOnAction(e -> onClick.run());
+        javafx.scene.layout.VBox.setMargin(b, new javafx.geometry.Insets(8, 0, 0, 0));
+        getChildren().add(b);
+        return this;
+    }
 }

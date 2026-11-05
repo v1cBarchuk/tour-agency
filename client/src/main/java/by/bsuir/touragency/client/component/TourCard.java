@@ -38,14 +38,20 @@ public class TourCard extends VBox {
     }
 
     public TourCard(Tour tour, Consumer<Tour> onOpen, boolean showFavorite) {
-        getStyleClass().addAll("card", "tour-card");
+        getStyleClass().addAll("card", "tour-card", "grid-item");
+        // ширину задаёт сетка или карусель: карточка растягивается по колонке
         setPrefWidth(WIDTH);
-        setMaxWidth(WIDTH);
+        setMinWidth(240);
+        setMaxWidth(Double.MAX_VALUE);
+        // карточка появляется плавно
+        setOpacity(0);
+        javafx.animation.FadeTransition appear = new javafx.animation.FadeTransition(javafx.util.Duration.millis(260), this);
+        appear.setToValue(1);
+        appear.play();
         setCursor(Cursor.HAND);
 
         // фото с метками поверх
-        StackPane media = new StackPane(Images.cover(tour.getImagePath(), tour.getHotelName(),
-                WIDTH, IMAGE_HEIGHT, 14));
+        StackPane media = new StackPane(new FluidCover(tour.getImagePath(), tour.getHotelName(), IMAGE_HEIGHT, 14));
         FlowPane badges = new FlowPane(6, 6);
         badges.setPadding(new Insets(10));
         badges.setPickOnBounds(false);
@@ -53,10 +59,16 @@ public class TourCard extends VBox {
         if (tour.isFeatured()) badges.getChildren().add(new Badge(I18n.t("badge.featured"), Badge.Kind.FEATURED));
         if (tour.isNewTour()) badges.getChildren().add(new Badge(I18n.t("badge.new"), Badge.Kind.NEW));
         if (tour.isPopular()) badges.getChildren().add(new Badge(I18n.t("badge.popular"), Badge.Kind.POPULAR));
+        if (tour.isAlmostSoldOut()) badges.getChildren().add(new Badge(I18n.t("badge.almostSold"), Badge.Kind.DANGER));
+        if (tour.getOldPrice() != null) badges.getChildren().add(new Badge(I18n.t("badge.priceDrop"), Badge.Kind.SUCCESS));
         // метки переносятся на новую строку и не заходят под процент совпадения и «сердечко»
-        double reserved = (tour.getMatchPercent() != null ? 62 : 0) + (showFavorite ? 42 : 0);
+        double reserved = (tour.getMatchPercent() != null ? 62 : 0) + (showFavorite ? 84 : 0);
         badges.setPrefWrapLength(WIDTH - 20 - reserved);
         badges.setMaxSize(WIDTH - reserved, Region.USE_PREF_SIZE);
+        widthProperty().addListener((o, a, w) -> {
+            badges.setPrefWrapLength(Math.max(80, w.doubleValue() - 20 - reserved));
+            badges.setMaxSize(Math.max(100, w.doubleValue() - reserved), Region.USE_PREF_SIZE);
+        });
         StackPane.setAlignment(badges, Pos.TOP_LEFT);
         media.getChildren().add(badges);
 
@@ -72,7 +84,7 @@ public class TourCard extends VBox {
             corner.getChildren().add(match);
         }
         if (showFavorite) {
-            corner.getChildren().add(new FavoriteButton(tour));
+            corner.getChildren().addAll(new CompareButton(tour), new FavoriteButton(tour));
         }
         StackPane.setAlignment(corner, Pos.TOP_RIGHT);
         media.getChildren().add(corner);
@@ -94,6 +106,12 @@ public class TourCard extends VBox {
 
         Label seats = new Label(I18n.t("common.seatsLeft", tour.getFreeSeats()));
         seats.getStyleClass().add(tour.getFreeSeats() <= 3 ? "seats-low" : "muted");
+        Integer wanted = by.bsuir.touragency.client.util.ClientContext.getDesiredPersons();
+        if (wanted != null && wanted > tour.getFreeSeats()) {
+            // клиент ищет тур на большее число туристов, чем осталось мест
+            seats.setText(I18n.t("card.notEnough", tour.getFreeSeats(), wanted));
+            seats.getStyleClass().setAll("label", "card-warning");
+        }
 
         HBox meta = new HBox(8, new RatingLabel(tour.getRating(), tour.getReviewsCount()), spacer(), seats);
         meta.setAlignment(Pos.CENTER_LEFT);
@@ -103,6 +121,11 @@ public class TourCard extends VBox {
         Label perPerson = new Label(I18n.t("common.perPerson"));
         perPerson.getStyleClass().add("muted");
         VBox priceBox = new VBox(0, price, perPerson);
+        if (tour.getOldPrice() != null) {
+            Label old = new Label(Fmt.money(tour.getOldPrice()));
+            old.getStyleClass().add("price-old");
+            priceBox.getChildren().add(0, old);
+        }
         Label more = new Label(I18n.t("tour.details") + "  →");
         more.getStyleClass().add("link-strong");
         HBox footer = new HBox(priceBox, spacer(), more);

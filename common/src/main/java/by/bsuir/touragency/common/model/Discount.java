@@ -45,6 +45,13 @@ public class Discount extends Entity {
     public void setMinDaysBefore(Integer minDaysBefore) { this.minDaysBefore = minDaysBefore; }
     public Integer getMinCompletedTrips() { return minCompletedTrips; }
     public void setMinCompletedTrips(Integer minCompletedTrips) { this.minCompletedTrips = minCompletedTrips; }
+    private String promoCode;     // для PROMO_CODE
+    private Integer maxUses;      // лимит использований промокода, null — без лимита
+
+    public String getPromoCode() { return promoCode; }
+    public void setPromoCode(String promoCode) { this.promoCode = promoCode; }
+    public Integer getMaxUses() { return maxUses; }
+    public void setMaxUses(Integer maxUses) { this.maxUses = maxUses; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public int getUsedCount() { return usedCount; }

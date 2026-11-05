@@ -9,6 +9,18 @@ import java.util.Optional;
 
 public interface TourDao {
 
+    /** Запись в историю цен (по ней показывается прежняя цена и рассылаются уведомления). */
+    void addPriceHistory(int tourId, java.math.BigDecimal oldPrice, java.math.BigDecimal newPrice, int changedBy);
+
+    /** Отметить, что клиент открыл тур (карусель «Вы недавно смотрели»). */
+    void registerView(int userId, int tourId);
+
+    /** Недавно просмотренные туры клиента, новые первыми. */
+    List<Tour> findRecentlyViewed(int userId, int limit, Lang lang);
+
+    /** Похожие туры: та же страна или тот же тип отдыха, ближе по цене — выше. */
+    List<Tour> findSimilar(Tour tour, int limit, Lang lang);
+
     List<Tour> find(TourFilter filter, Lang lang);
 
     Optional<Tour> findById(int id, Lang lang);

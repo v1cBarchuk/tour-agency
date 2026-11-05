@@ -25,6 +25,7 @@ public class FavoriteButton extends Label {
             Async.send(new Request(CommandType.TOGGLE_FAVORITE).with("tourId", tour.getId()), response -> {
                 if (response.isOk()) {
                     tour.setFavorite(response.<Boolean>getData());
+                    by.bsuir.touragency.client.util.FavoritesCount.changed(tour.isFavorite());
                     render();
                 } else {
                     Alerts.error(response.getMessage());

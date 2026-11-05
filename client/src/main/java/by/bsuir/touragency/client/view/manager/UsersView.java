@@ -51,6 +51,7 @@ public class UsersView extends BaseView {
         roleFilter.setPrefWidth(180);
         roleFilter.setOnAction(e -> filter());
         search = new TextField();
+        search.getStyleClass().add("search-field");   // Ctrl+F
         search.setPromptText(t("us.search"));
         search.setPrefWidth(220);
         search.textProperty().addListener((o, a, b) -> filter());
@@ -85,6 +86,7 @@ public class UsersView extends BaseView {
                 + ":" + u.getLastLogin());
         reload();
         Ui.autoRefresh(page, 15, this::refreshQuietly);
+        panel.setRowStyle(u -> u.isBlocked() ? "row-cancelled" : null);
         return page;
     }
 

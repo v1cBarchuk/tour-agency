@@ -50,6 +50,18 @@ public final class Async {
         }, error -> { });
     }
 
+    // Перегрузка: текст ошибки передаётся в onError, а не показывается окном
+    public static <T extends java.io.Serializable> void quiet(Request request, Consumer<T> onData,
+                                                              Consumer<String> onError) {
+        send(request, response -> {
+            if (response.isOk()) {
+                onData.accept(response.getData());
+            } else {
+                onError.accept(response.getMessage());
+            }
+        }, error -> onError.accept(I18n.t("net.lost")));
+    }
+
     public static <T extends java.io.Serializable> void load(Request request, Consumer<T> onData) {
         send(request, response -> {
             if (response.isOk()) {

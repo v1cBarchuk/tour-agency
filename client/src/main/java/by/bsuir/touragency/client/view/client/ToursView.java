@@ -48,8 +48,10 @@ public class ToursView extends BaseView {
     private ComboBox<DictionaryItem> mealType;
     private TextField persons;
     private ComboBox<TourFilter.Sort> sort;
-    private FlowPane results;
+    private by.bsuir.touragency.client.component.CardGrid results;
     private Label found;
+    private javafx.scene.control.CheckBox onlyHot;
+    private javafx.scene.control.CheckBox visaFree;
 
     public ToursView(Shell shell, TourFilter initial) {
         this.shell = shell;
@@ -74,10 +76,9 @@ public class ToursView extends BaseView {
         sort.setOnAction(e -> search());
         HBox header = Ui.row(12, new VBox(2, title, found), Ui.hSpacer(), new Label(t("tours.sort")), sort);
 
-        results = new FlowPane(18, 18);
-        results.setAlignment(Pos.TOP_LEFT);
+        results = new by.bsuir.touragency.client.component.CardGrid(260, 18);
 
-        VBox page = new VBox(20, header, filters(), results);
+        VBox page = new VBox(20, header, filters(), new by.bsuir.touragency.client.component.AdBanner(), results);
         page.getStyleClass().add("page");
         search();
         return page;
@@ -133,7 +134,13 @@ public class ToursView extends BaseView {
             cc.setPercentWidth(20);
             grid.getColumnConstraints().add(cc);
         }
-        HBox buttons = Ui.row(8, Ui.hSpacer(), reset, apply);
+        onlyHot = new javafx.scene.control.CheckBox(t("tours.onlyHot"));
+        onlyHot.setSelected(initial.isOnlyHot());
+        visaFree = new javafx.scene.control.CheckBox(t("tours.visaFree"));
+        visaFree.setSelected(initial.isOnlyVisaFree());
+        onlyHot.setOnAction(e -> search());
+        visaFree.setOnAction(e -> search());
+        HBox buttons = Ui.row(16, onlyHot, visaFree, Ui.hSpacer(), reset, apply);
         VBox box = new VBox(14, grid, buttons);
         box.getStyleClass().addAll("card", "filter-panel");
         return box;
@@ -149,6 +156,8 @@ public class ToursView extends BaseView {
                 .setMaxNights(Ui.integer(maxNights))
                 .setMinStars(stars.getValue())
                 .setVacationTypeId(vacationType.getValue() == null ? null : vacationType.getValue().getId())
+                .setOnlyHot(onlyHot.isSelected())
+                .setOnlyVisaFree(visaFree.isSelected())
                 .setMealTypeId(mealType.getValue() == null ? null : mealType.getValue().getId())
                 .setPersons(Ui.integer(persons))
                 .setSort(sort.getValue());
@@ -156,11 +165,15 @@ public class ToursView extends BaseView {
 
     private void search() {
         if (results == null) return;
-        Async.<ArrayList<Tour>>load(new Request(CommandType.GET_TOURS).with("filter", collect()), tours -> {
+        by.bsuir.touragency.client.component.Skeleton.fill(results, 6, 290, 170);
+        TourFilter filter = collect();
+        ClientContext.setDesiredPersons(filter.getPersons());
+        Async.<ArrayList<Tour>>load(new Request(CommandType.GET_TOURS).with("filter", filter), tours -> {
             found.setText(t("tours.subtitle", tours.size()));
             results.getChildren().clear();
             if (tours.isEmpty()) {
-                EmptyState empty = new EmptyState("✈", t("common.empty"), t("common.emptyHint"));
+                EmptyState empty = new EmptyState("✈", t("common.empty"), t("common.emptyHint"))
+                        .action(t("empty.resetFilters"), () -> shell.openSection("menu.tours"));
                 empty.setPrefWidth(900);
                 results.getChildren().add(empty);
                 return;

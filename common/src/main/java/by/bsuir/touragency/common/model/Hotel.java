@@ -25,6 +25,7 @@ public class Hotel extends Entity {
     private String mainPhoto;
     private ArrayList<Integer> amenityIds = new ArrayList<>();
     private ArrayList<String> amenityNames = new ArrayList<>();
+    private ArrayList<String> photos = new ArrayList<>();   // все фото отеля по порядку (галерея)
 
     public Hotel() {
     }
@@ -75,4 +76,6 @@ public class Hotel extends Entity {
     public void setAmenityIds(List<Integer> ids) { this.amenityIds = new ArrayList<>(ids); }
     public List<String> getAmenityNames() { return amenityNames; }
     public void setAmenityNames(List<String> names) { this.amenityNames = new ArrayList<>(names); }
+    public List<String> getPhotos() { return photos; }
+    public void setPhotos(List<String> photos) { this.photos = new ArrayList<>(photos); }
 }

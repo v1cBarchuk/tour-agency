@@ -43,7 +43,8 @@ public class RecommendationsView extends BaseView {
         VBox page = new VBox(28, new HBox(pageHeader(t("rec.title"), t("rec.subtitle")),
                 by.bsuir.touragency.client.util.Ui.hSpacer(), edit));
         page.getStyleClass().add("page");
-        Label loading = new Label(t("common.loading"));
+        javafx.scene.layout.FlowPane loading = new javafx.scene.layout.FlowPane(18, 18);
+        by.bsuir.touragency.client.component.Skeleton.fill(loading, 3, 290, 170);
         page.getChildren().add(loading);
 
         Async.<Recommendations>load(new Request(CommandType.GET_RECOMMENDATIONS), rec -> {
@@ -81,9 +82,10 @@ public class RecommendationsView extends BaseView {
         Label sub = new Label(hint);
         sub.getStyleClass().add("muted");
         sub.setWrapText(true);
-        FlowPane grid = new FlowPane(18, 18);
+        by.bsuir.touragency.client.component.CardGrid grid = new by.bsuir.touragency.client.component.CardGrid(260, 18);
         if (results.isEmpty()) {
-            grid.getChildren().add(new EmptyState("★", t("common.empty"), t("rec.empty")));
+            grid.getChildren().add(new EmptyState("★", t("common.empty"), t("rec.empty"))
+                    .action(t("rec.editPrefs"), () -> shell.openSection("menu.preferences")));
         }
         results.forEach(r -> grid.getChildren().add(new MatchCard(r, showPercent,
                 tour -> shell.open(new TourDetailsView(shell, tour.getId())))));

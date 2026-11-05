@@ -27,6 +27,13 @@ public final class Fmt {
     /** 1250.00 → «1 250 BYN». */
     public static String money(BigDecimal amount) {
         if (amount == null) return "—";
+        BigDecimal value = Currency.convert(amount);           // BYN → выбранная валюта
+        return moneyFormat().format(value.setScale(0, RoundingMode.HALF_UP)) + " " + Currency.code();
+    }
+
+    /** Всегда в BYN — для сумм в документах и при оплате. */
+    public static String moneyByn(BigDecimal amount) {
+        if (amount == null) return "—";
         return moneyFormat().format(amount.setScale(0, RoundingMode.HALF_UP)) + " " + CURRENCY;
     }
 

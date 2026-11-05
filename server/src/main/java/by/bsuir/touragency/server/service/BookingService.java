@@ -71,12 +71,21 @@ public class BookingService {
     // ------------------------------------------------------------ расчёт цены
 
     public BookingQuote quote(int tourId, int persons, User client, Lang lang) throws AppException {
+        return quote(tourId, persons, null, client, lang);
+    }
+
+    /** Расчёт цены с учётом промокода; неверный или исчерпанный код — ошибка проверки. */
+    public BookingQuote quote(int tourId, int persons, String promoCode, User client, Lang lang) throws AppException {
         Tour tour = bookableTour(tourId, lang);
         Validator.range(persons, 1, MAX_PERSONS, "field.persons");
         BigDecimal base = tour.getPricePerPerson().multiply(BigDecimal.valueOf(persons));
         DiscountContext ctx = new DiscountContext(tour.getStartDate(), LocalDate.now(),
-                bookingDao.countCompletedTrips(client.getId()));
-        Optional<DiscountCalculator.Applied> applied = calculator.best(discountDao.findActive(), ctx);
+                bookingDao.countCompletedTrips(client.getId()), promoCode);
+        List<by.bsuir.touragency.common.model.Discount> active = discountDao.findActive();
+        if (ctx.hasPromoCode() && !calculator.promoAccepted(active, ctx)) {
+            throw new ValidationException("promo.invalid");
+        }
+        Optional<DiscountCalculator.Applied> applied = calculator.best(active, ctx);
         if (applied.isEmpty()) {
             return new BookingQuote(persons, tour.getPricePerPerson(), base, null, null, null, BigDecimal.ZERO,
                     base, tour.getFreeSeats(), "discount.why.NONE", new String[0]);
@@ -101,6 +110,11 @@ public class BookingService {
 
     public Booking create(User client, int tourId, List<Tourist> tourists, String phone, String email, Lang lang)
             throws AppException {
+        return create(client, tourId, tourists, phone, email, null, lang);
+    }
+
+    public Booking create(User client, int tourId, List<Tourist> tourists, String phone, String email,
+                          String promoCode, Lang lang) throws AppException {
         if (client.getRole() != Role.CLIENT) {
             throw new AuthException("error.forbidden");
         }
@@ -113,7 +127,7 @@ public class BookingService {
         String contactEmail = Validator.email(email);
 
         // цена и скидка всегда пересчитываются на сервере
-        BookingQuote q = quote(tourId, persons, client, lang);
+        BookingQuote q = quote(tourId, persons, promoCode, client, lang);
         if (q.freeSeats() < persons) {
             throw new BusinessRuleException("booking.noSeats", q.freeSeats());
         }
@@ -243,7 +257,11 @@ public class BookingService {
     }
 
     int penaltyPercent(long daysBefore) {
-        String scale = settings.get("penalty.scale", "31:5;15:15;7:30;3:50;0:80");
+        return penaltyPercent(settings.get("penalty.scale", "31:5;15:15;7:30;3:50;0:80"), daysBefore);
+    }
+
+    /** Процент штрафа по шкале вида «31:5;15:15;…» (порог в днях : процент). */
+    static int penaltyPercent(String scale, long daysBefore) {
         List<int[]> steps = new ArrayList<>();
         for (String part : scale.split(";")) {
             String[] kv = part.trim().split(":");

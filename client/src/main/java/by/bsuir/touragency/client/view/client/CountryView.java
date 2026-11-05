@@ -45,8 +45,9 @@ public class CountryView extends BaseView {
     @Override
     protected Parent build() {
         // баннер
-        StackPane banner = new StackPane(Images.cover(country.getImagePath(), null, 940, 240, 18));
-        banner.setMaxWidth(940);
+        StackPane banner = new StackPane(new by.bsuir.touragency.client.component.FluidCover(
+                country.getImagePath(), country.getName(), 280, 18));
+        banner.setMaxWidth(Double.MAX_VALUE);
         banner.setAlignment(Pos.TOP_LEFT);
         banner.getStyleClass().add("banner");
         Region shade = new Region();
@@ -72,7 +73,7 @@ public class CountryView extends BaseView {
 
         Label toursTitle = new Label(t("dest.toursIn"));
         toursTitle.getStyleClass().add("section-title");
-        FlowPane tours = new FlowPane(18, 18);
+        by.bsuir.touragency.client.component.CardGrid tours = new by.bsuir.touragency.client.component.CardGrid(260, 18);
 
         Async.<ArrayList<Hotel>>load(new Request(CommandType.GET_HOTELS).with("countryId", country.getId()), list -> {
             hotelsTitle.setText(t("dest.hotelsIn", list.size()));

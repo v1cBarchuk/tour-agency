@@ -34,7 +34,7 @@ public class DestinationsView extends BaseView {
         subtitle.getStyleClass().add("page-subtitle");
         Label title = new Label(t("dest.title"));
         title.getStyleClass().add("page-title");
-        FlowPane grid = new FlowPane(18, 18);
+        by.bsuir.touragency.client.component.CardGrid grid = new by.bsuir.touragency.client.component.CardGrid(260, 18);
 
         Async.<ArrayList<Country>>load(new Request(CommandType.GET_COUNTRIES), countries -> {
             subtitle.setText(t("dest.subtitle", countries.size()));

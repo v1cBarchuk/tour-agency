@@ -1,0 +1,14 @@
+﻿Фотографии: Wikimedia Commons, свободные лицензии (CC BY / CC BY-SA / PD). Автор и лицензия — на странице файла.
+images/hero/login.jpg  <-  https://commons.wikimedia.org/wiki/File:DFC_0008_Two_people_sit_quietly_on_a_palm-fringed_beach_as_the_sun_sets_over_calm_waters_and_silhouetted_islands.jpg
+images/hero/home.jpg  <-  https://commons.wikimedia.org/wiki/File:Buna_aerial_whole_length_(WPWTR16).JPG
+images/countries/egypt.jpg  <-  https://commons.wikimedia.org/wiki/File:Lagona_landscape.JPG
+images/countries/georgia.jpg  <-  https://commons.wikimedia.org/wiki/File:Houses_and_Buildings_in_Tbilisi_-_city_View_-_Georgia_Travel_And_Tourism_01.jpg
+images/countries/italy.jpg  <-  https://commons.wikimedia.org/wiki/File:Alberobello_-_Trulli_del_Rione_Monti_-_01.jpg
+images/countries/maldives.jpg  <-  https://commons.wikimedia.org/wiki/File:1_Maldives,_Indian_Ocean,_Asia.jpg
+images/countries/spain.jpg  <-  https://commons.wikimedia.org/wiki/File:Blue_Mountains_National_Park_(AU),_Three_Sisters_--_2019_--_1983.jpg
+images/countries/thailand.jpg  <-  https://commons.wikimedia.org/wiki/File:A_sign_illuminated_with_rainbow_colors_(54570520133).jpg
+images/countries/turkey.jpg  <-  https://commons.wikimedia.org/wiki/File:17_Little_Petra_Canyon_Trail_-_The_Landscape_Looks_Like_Cappadocia_in_Turkey_-_panoramio.jpg
+images/hotels/atlantis-the-palm-main.jpg  <-  https://commons.wikimedia.org/wiki/File:Aquaventure._The_Atlantis,_Dubai_(8973483064).jpg
+images/hotels/atlantis-the-palm-room.jpg  <-  https://commons.wikimedia.org/wiki/File:Atlantis,_The_Palm_from_Le_Royal_M%C3%A9ridien_Beach_Resort_and_Spa_in_Dubai_2.jpg
+images/hotels/atlantis-the-palm-restaurant.jpg  <-  https://commons.wikimedia.org/wiki/File:Aquaventure._The_Atlantis,_Dubai_(8973483200).jpg
+images/hotels/rove-downtown-main.jpg  <-  https://commons.wikimedia.org/wiki/File:Sh5-zayed-road.jpg

@@ -21,6 +21,16 @@ public class User extends Entity {
     private LocalDateTime createdAt;
     private int bookingsCount;        // для списка пользователей
     private LocalDateTime lastLogin;
+    private java.time.LocalDate birthDate;      // личный кабинет
+    private String homeCity;                    // город вылета
+    private boolean notifyPriceDrop = true;     // уведомлять о снижении цен на избранное
+
+    public java.time.LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(java.time.LocalDate birthDate) { this.birthDate = birthDate; }
+    public String getHomeCity() { return homeCity; }
+    public void setHomeCity(String homeCity) { this.homeCity = homeCity; }
+    public boolean isNotifyPriceDrop() { return notifyPriceDrop; }
+    public void setNotifyPriceDrop(boolean notifyPriceDrop) { this.notifyPriceDrop = notifyPriceDrop; }
 
     public User() {
     }

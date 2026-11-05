@@ -1,5 +1,8 @@
 package by.bsuir.touragency.server.command;
 
+import by.bsuir.touragency.server.service.WeatherService;
+import by.bsuir.touragency.common.model.User;
+import java.util.HashMap;
 import by.bsuir.touragency.common.model.BookingStatus;
 import by.bsuir.touragency.common.model.City;
 import by.bsuir.touragency.common.model.Country;
@@ -75,6 +78,7 @@ public class CommandFactory {
 
         AuthService auth = new AuthService(userDao, auditDao);
         CatalogService catalog = new CatalogService(catalogDao, tourDao, discountDao, auditDao);
+        catalog.setEvents(events);
         RecommendationService rec = new RecommendationService(preferenceDao, tourDao, new JdbcFavoriteDao(),
                 bookingDao, catalogDao, auditDao);
         BookingService booking = new BookingService(bookingDao, tourDao, discountDao, new JdbcReviewDao(),
@@ -99,8 +103,49 @@ public class CommandFactory {
             Tour tour = catalog.getTour(rq.getInt("tourId"), rq.getLang());
             if (s.getUser().getRole() == Role.CLIENT) {
                 rec.annotate(new ArrayList<>(List.of(tour)), s.getUser().getId(), rq.getLang(), false);
+                if (!rq.getBool("noView")) tourDao.registerView(s.getUser().getId(), tour.getId());
             }
             return Response.ok(tour);
+        });
+        put(CommandType.GET_SIMILAR_TOURS, AUTHENTICATED, (rq, s) -> {
+            Tour tour = catalog.getTour(rq.getInt("tourId"), rq.getLang());
+            ArrayList<Tour> list = new ArrayList<>(tourDao.findSimilar(tour, 8, rq.getLang()));
+            if (s.getUser().getRole() == Role.CLIENT) rec.annotate(list, s.getUser().getId(), rq.getLang(), false);
+            return Response.ok(list);
+        });
+        put(CommandType.GET_RECENTLY_VIEWED, CLIENTS, (rq, s) -> {
+            ArrayList<Tour> list = new ArrayList<>(tourDao.findRecentlyViewed(s.getUser().getId(), 10, rq.getLang()));
+            rec.annotate(list, s.getUser().getId(), rq.getLang(), false);
+            return Response.ok(list);
+        });
+        WeatherService weather = new WeatherService(settings);
+        put(CommandType.GET_WEATHER, AUTHENTICATED, (rq, s) ->
+                Response.ok(weather.forecast(catalog.getTour(rq.getInt("tourId"), rq.getLang()))));
+
+        // курсы валют для переключателя BYN / USD / EUR (хранятся в настройках, задаёт администратор)
+        put(CommandType.GET_RATES, AUTHENTICATED, (rq, s) -> {
+            HashMap<String, java.math.BigDecimal> rates = new HashMap<>();
+            for (String c : List.of("USD", "EUR")) {
+                rates.put(c, new java.math.BigDecimal(settings.get("currency.rate." + c, c.equals("USD") ? "3.27" : "3.55")));
+            }
+            return Response.ok(rates);
+        });
+
+        // ---- личный кабинет
+        put(CommandType.GET_PROFILE, AUTHENTICATED, (rq, s) -> {
+            HashMap<String, java.io.Serializable> data = new HashMap<>();
+            data.put("user", userDao.findById(s.getUser().getId()).orElse(s.getUser()));
+            data.put("stats", auth.profileStats(s.getUser().getId()));
+            return Response.ok(data);
+        });
+        put(CommandType.SAVE_PROFILE, AUTHENTICATED, (rq, s) -> {
+            User updated = auth.updateProfile(s.getUser(), rq.<User>getObject("user"));
+            s.setUser(updated);
+            return Response.ok(msg(rq, "profile.saved"), updated);
+        });
+        put(CommandType.CHANGE_PASSWORD, AUTHENTICATED, (rq, s) -> {
+            auth.changePassword(s.getUser(), rq.getString("oldPassword"), rq.getString("newPassword"));
+            return Response.ok(msg(rq, "profile.passwordChanged"), null);
         });
         put(CommandType.GET_HOTEL_REVIEWS, AUTHENTICATED, (rq, s) -> Response.ok(new ArrayList<>(
                 booking.hotelReviews(rq.getInt("hotelId")))));
@@ -148,11 +193,12 @@ public class CommandFactory {
 
         // ---- бронирование
         put(CommandType.QUOTE_BOOKING, CLIENTS, (rq, s) ->
-                Response.ok(booking.quote(rq.getInt("tourId"), rq.getInt("persons"), s.getUser(), rq.getLang())));
+                Response.ok(booking.quote(rq.getInt("tourId"), rq.getInt("persons"), rq.getString("promoCode"),
+                        s.getUser(), rq.getLang())));
         put(CommandType.CREATE_BOOKING, CLIENTS, (rq, s) -> {
             ArrayList<Tourist> tourists = rq.getObject("tourists");
             return Response.ok(msg(rq, "booking.created"), booking.create(s.getUser(), rq.getInt("tourId"),
-                    tourists, rq.getString("phone"), rq.getString("email"), rq.getLang()));
+                    tourists, rq.getString("phone"), rq.getString("email"), rq.getString("promoCode"), rq.getLang()));
         });
         put(CommandType.GET_MY_BOOKINGS, CLIENTS, (rq, s) ->
                 Response.ok(new ArrayList<>(booking.myBookings(s.getUser(), rq.getLang()))));

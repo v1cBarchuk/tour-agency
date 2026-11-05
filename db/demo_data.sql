@@ -705,3 +705,68 @@ INSERT INTO audit_log (user_id, action, object_type, object_id, details, created
     (1, 'UPDATE', 'USER', 18, 'is_blocked: false → true', '2026-10-30 11:00:00'),
     (1, 'UPDATE', 'USER', 18, 'is_blocked: true → false', '2026-10-31 11:00:00'),
     (2, 'CREATE', 'DISCOUNT', 2, 'Создана скидка «Весенний сезон» 7%', '2026-10-27 11:00:00');
+
+-- координаты городов для прогноза погоды (Open-Meteo)
+UPDATE cities SET latitude = 36.8969, longitude = 30.7133 WHERE city_id = 1;
+UPDATE cities SET latitude = 36.8625, longitude = 31.0556 WHERE city_id = 2;
+UPDATE cities SET latitude = 36.5983, longitude = 30.5594 WHERE city_id = 3;
+UPDATE cities SET latitude = 36.7675, longitude = 31.3889 WHERE city_id = 4;
+UPDATE cities SET latitude = 27.2579, longitude = 33.8116 WHERE city_id = 5;
+UPDATE cities SET latitude = 27.9158, longitude = 34.33 WHERE city_id = 6;
+UPDATE cities SET latitude = 25.2048, longitude = 55.2708 WHERE city_id = 7;
+UPDATE cities SET latitude = 24.4539, longitude = 54.3773 WHERE city_id = 8;
+UPDATE cities SET latitude = 7.8804, longitude = 98.3923 WHERE city_id = 9;
+UPDATE cities SET latitude = 12.9236, longitude = 100.8825 WHERE city_id = 10;
+UPDATE cities SET latitude = 4.417, longitude = 73.5 WHERE city_id = 11;
+UPDATE cities SET latitude = 41.6168, longitude = 41.6367 WHERE city_id = 12;
+UPDATE cities SET latitude = 42.4783, longitude = 44.4806 WHERE city_id = 13;
+UPDATE cities SET latitude = 41.7151, longitude = 44.8271 WHERE city_id = 14;
+UPDATE cities SET latitude = 41.9028, longitude = 12.4964 WHERE city_id = 15;
+UPDATE cities SET latitude = 44.0678, longitude = 12.5695 WHERE city_id = 16;
+UPDATE cities SET latitude = 41.3874, longitude = 2.1686 WHERE city_id = 17;
+UPDATE cities SET latitude = 41.0764, longitude = 1.1316 WHERE city_id = 18;
+
+-- безвизовый въезд для граждан Беларуси (демо-данные: перед поездкой правила стоит уточнить)
+UPDATE countries SET visa_free = TRUE WHERE country_id = 1;
+UPDATE countries SET visa_free = TRUE WHERE country_id = 5;
+UPDATE countries SET visa_free = TRUE WHERE country_id = 6;
+
+-- данные личного кабинета
+UPDATE users SET birth_date = '1998-04-12', home_city = 'Минск' WHERE user_id = 4;
+UPDATE users SET birth_date = '1995-09-30', home_city = 'Гродно' WHERE user_id = 5;
+
+INSERT INTO discounts (discount_id, name_ru, name_en, discount_type, percent, valid_from, valid_to, promo_code, max_uses) VALUES
+    (7, 'Промокод студента', 'Student promo code', 'PROMO_CODE', 15, '2026-09-01', '2027-06-30', 'STUDENT15', 50),
+    (8, 'Промокод «Добро пожаловать»', 'Welcome promo code', 'PROMO_CODE', 8, NULL, NULL, 'WELCOME8', NULL);
+
+INSERT INTO tour_price_history (tour_id, old_price, new_price, changed_by, changed_at) VALUES
+    (9, 3990, 3790, 2, '2026-10-27 10:00:00'),
+    (11, 2290, 2020, 2, '2026-10-30 10:00:00'),
+    (23, 2750, 2600, 2, '2026-10-31 10:00:00');
+
+INSERT INTO notifications (user_id, type, tour_id, booking_id, message, is_read, created_at) VALUES
+    (4, 'PRICE_DROP', 11, NULL, '2290;2020', FALSE, '2026-10-30 10:00:00'),
+    (4, 'PRICE_DROP', 23, NULL, '2750;2600', FALSE, '2026-10-31 10:00:00');
+
+INSERT INTO tour_views (user_id, tour_id, viewed_at, views_count) VALUES
+    (4, 12, '2026-11-01 18:00:00', 2),
+    (4, 17, '2026-11-01 17:00:00', 1),
+    (4, 23, '2026-10-31 20:00:00', 3),
+    (4, 13, '2026-10-30 12:00:00', 1),
+    (4, 24, '2026-10-29 15:00:00', 1);
+
+INSERT INTO bookings (booking_id, user_id, tour_id, status_id, discount_id, persons_count, base_price, discount_amount, total_price, contact_phone, contact_email, created_at) VALUES
+    (30, 7, 13, 3, NULL, 6, 45900, 0, 45900, '+375 29 195-37-39', 'maria4@mail.by', '2026-10-31 13:00:00');
+
+INSERT INTO booking_tourists (booking_id, tourist_no, full_name, birth_date) VALUES
+    (30, 1, 'Мария Новикова', '1980-03-10'),
+    (30, 2, 'Турист 2 Новикова', '1984-04-10'),
+    (30, 3, 'Турист 3 Новикова', '1988-05-10'),
+    (30, 4, 'Турист 4 Новикова', '1992-06-10'),
+    (30, 5, 'Турист 5 Новикова', '1996-07-10'),
+    (30, 6, 'Турист 6 Новикова', '2000-08-10');
+
+INSERT INTO booking_status_history (booking_id, status_id, changed_by, comment, changed_at) VALUES
+    (30, 1, 7, 'Групповая поездка', '2026-10-31 13:00:00'),
+    (30, 2, 2, NULL, '2026-10-31 17:00:00'),
+    (30, 3, 2, NULL, '2026-11-01 11:00:00');

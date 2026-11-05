@@ -31,10 +31,12 @@ public class FavoritesView extends BaseView {
 
     @Override
     protected Parent build() {
-        FlowPane grid = new FlowPane(18, 18);
+        by.bsuir.touragency.client.component.CardGrid grid = new by.bsuir.touragency.client.component.CardGrid(260, 18);
         VBox page = new VBox(20, pageHeader(t("fav.title"), t("fav.subtitle")), grid);
         page.getStyleClass().add("page");
+        by.bsuir.touragency.client.component.Skeleton.fill(grid, 3, 290, 170);
         Async.<ArrayList<Tour>>load(new Request(CommandType.GET_FAVORITES), tours -> {
+            grid.getChildren().clear();
             if (tours.isEmpty()) {
                 EmptyState empty = new EmptyState("♡", t("fav.empty"), t("fav.emptyHint"));
                 Button go = new Button(t("menu.tours"));

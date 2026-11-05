@@ -48,6 +48,12 @@ public class Tour extends Entity {
     private boolean hot;
     private boolean newTour;
     private boolean popular;
+    private boolean almostSoldOut;      // занято больше N % мест (настройка tour.almostSold.percent)
+    private java.math.BigDecimal oldPrice;  // прежняя цена, если её снизили за последние 30 дней
+    private Integer cityId;
+    private boolean visaFree;
+    private Double latitude;            // координаты города — для прогноза погоды
+    private Double longitude;
     private Integer matchPercent;     // совпадение с анкетой клиента, null — анкеты нет
     private boolean favorite;         // тур в избранном текущего клиента
 
@@ -141,5 +147,21 @@ public class Tour extends Entity {
     public boolean isFavorite() { return favorite; }
     public void setFavorite(boolean v) { favorite = v; }
     public boolean isPopular() { return popular; }
+    public boolean isAlmostSoldOut() { return almostSoldOut; }
+    public void setAlmostSoldOut(boolean almostSoldOut) { this.almostSoldOut = almostSoldOut; }
+    public java.math.BigDecimal getOldPrice() { return oldPrice; }
+    public void setOldPrice(java.math.BigDecimal oldPrice) { this.oldPrice = oldPrice; }
+    public boolean isVisaFree() { return visaFree; }
+    public void setVisaFree(boolean visaFree) { this.visaFree = visaFree; }
+    public Integer getCityId() { return cityId; }
+    public void setCityId(Integer cityId) { this.cityId = cityId; }
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
+    /** Доля занятых мест, 0–100. */
+    public int getOccupancyPercent() {
+        return getTotalSeats() == 0 ? 0 : (int) Math.round(100.0 * (getTotalSeats() - getFreeSeats()) / getTotalSeats());
+    }
     public void setPopular(boolean popular) { this.popular = popular; }
 }

@@ -28,6 +28,13 @@ public class DiscountCalculator {
         strategies.put(DiscountType.SEASONAL, new SeasonalDiscountStrategy());
         strategies.put(DiscountType.EARLY_BOOKING, new EarlyBookingDiscountStrategy());
         strategies.put(DiscountType.LOYALTY, new LoyaltyDiscountStrategy());
+        strategies.put(DiscountType.PROMO_CODE, new PromoCodeDiscountStrategy());
+    }
+
+    /** Подходит ли введённый промокод хотя бы к одной активной скидке. */
+    public boolean promoAccepted(List<Discount> activeDiscounts, DiscountContext context) {
+        return activeDiscounts.stream().anyMatch(d -> d.getType() == DiscountType.PROMO_CODE
+                && strategies.get(d.getType()).applies(d, context));
     }
 
     public Optional<Applied> best(List<Discount> activeDiscounts, DiscountContext context) {

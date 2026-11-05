@@ -32,7 +32,11 @@ public class JdbcTourDao extends BaseDao implements TourDao {
                 + "COALESCE(t." + lang.col("title") + ", t.title_ru) title, "
                 + "COALESCE(t." + lang.col("description") + ", t.description_ru) description, "
                 + "h.name hotel_name, h.stars hotel_stars, ci.city_id, ci." + lang.col("name") + " city_name, "
-                + "co.country_id, co." + lang.col("name") + " country_name, "
+                + "ci.latitude, ci.longitude, "
+                + "(SELECT ph.old_price FROM tour_price_history ph WHERE ph.tour_id = t.tour_id "
+                + "   AND ph.changed_at >= NOW() - INTERVAL 30 DAY ORDER BY ph.changed_at DESC, ph.history_id DESC "
+                + "   LIMIT 1) old_price, "
+                + "co.country_id, co." + lang.col("name") + " country_name, co.visa_free, "
                 + "vt." + lang.col("name") + " vacation_type_name, mt." + lang.col("name") + " meal_type_name, "
                 + "DATEDIFF(t.end_date, t.start_date) nights, "
                 + "t.total_seats - COALESCE((SELECT SUM(b.persons_count) FROM bookings b "
@@ -88,6 +92,13 @@ public class JdbcTourDao extends BaseDao implements TourDao {
         if (f.getMinStars() != null) {
             sql.append("AND x.hotel_stars >= ? ");
             p.add(f.getMinStars());
+        }
+        if (f.isOnlyHot()) {
+            sql.append("AND x.start_date <= CURRENT_DATE + INTERVAL ? DAY ");
+            p.add(settings.getInt("tour.hot.days", 14));
+        }
+        if (f.isOnlyVisaFree()) {
+            sql.append("AND x.visa_free = TRUE ");
         }
         if (f.getPersons() != null) {
             sql.append("AND x.free_seats >= ? ");
@@ -152,6 +163,12 @@ public class JdbcTourDao extends BaseDao implements TourDao {
         t.setBookingsCount(rs.getInt("bookings_count"));
         t.setRating(getDouble(rs, "rating"));
         t.setReviewsCount(rs.getInt("reviews_count"));
+        t.setCityId(rs.getInt("city_id"));
+        t.setVisaFree(rs.getBoolean("visa_free"));
+        t.setLatitude(getDouble(rs, "latitude"));
+        t.setLongitude(getDouble(rs, "longitude"));
+        java.math.BigDecimal old = getMoney(rs, "old_price");
+        if (old != null && old.compareTo(t.getPricePerPerson()) > 0) t.setOldPrice(old);   // только снижение
 
         // метки карточки
         LocalDate today = LocalDate.now();
@@ -160,6 +177,8 @@ public class JdbcTourDao extends BaseDao implements TourDao {
         t.setNewTour(t.getCreatedAt() != null
                 && t.getCreatedAt().isAfter(LocalDateTime.now().minusDays(settings.getInt("tour.new.days", 10))));
         t.setPopular(t.getBookingsCount() >= settings.getInt("tour.popular.bookings", 2));
+        t.setAlmostSoldOut(t.getFreeSeats() > 0
+                && t.getOccupancyPercent() > settings.getInt("tour.almostSold.percent", 80));
         return t;
     }
 
@@ -181,6 +200,33 @@ public class JdbcTourDao extends BaseDao implements TourDao {
                 t.getHotelId(), t.getVacationTypeId(), t.getMealTypeId(), t.getTitleRu(), t.getTitleEn(),
                 t.getDescriptionRu(), t.getDescriptionEn(), t.getStartDate(), t.getEndDate(), t.getPricePerPerson(),
                 t.getTotalSeats(), t.isFeatured(), t.isActive(), t.getId());
+    }
+
+    @Override
+    public void addPriceHistory(int tourId, java.math.BigDecimal oldPrice, java.math.BigDecimal newPrice, int changedBy) {
+        update("INSERT INTO tour_price_history (tour_id, old_price, new_price, changed_by) VALUES (?, ?, ?, ?)",
+                tourId, oldPrice, newPrice, changedBy);
+    }
+
+    @Override
+    public void registerView(int userId, int tourId) {
+        update("INSERT INTO tour_views (user_id, tour_id) VALUES (?, ?) "
+                + "ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP, views_count = views_count + 1", userId, tourId);
+    }
+
+    @Override
+    public List<Tour> findRecentlyViewed(int userId, int limit, Lang lang) {
+        return query(baseSql(lang) + "JOIN tour_views v ON v.tour_id = x.tour_id "
+                + "WHERE v.user_id = ? AND x.is_active = TRUE ORDER BY v.viewed_at DESC LIMIT ?", this::map, userId, limit);
+    }
+
+    @Override
+    public List<Tour> findSimilar(Tour t, int limit, Lang lang) {
+        return query(baseSql(lang) + "WHERE x.tour_id <> ? AND x.is_active = TRUE AND x.start_date > CURRENT_DATE "
+                        + "AND x.free_seats > 0 AND (x.country_id = ? OR x.vacation_type_id = ?) "
+                        + "ORDER BY (x.country_id = ?) DESC, ABS(x.price_per_person - ?), x.start_date LIMIT ?",
+                this::map, t.getId(), t.getCountryId(), t.getVacationTypeId(), t.getCountryId(),
+                t.getPricePerPerson(), limit);
     }
 
     @Override

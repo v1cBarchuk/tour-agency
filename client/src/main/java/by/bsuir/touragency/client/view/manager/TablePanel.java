@@ -39,6 +39,33 @@ public class TablePanel<T> extends VBox {
         extra.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         toolbar.getChildren().addAll(extra, Ui.hSpacer());
         getChildren().addAll(toolbar, table);
+        // одна фабрика строк: двойной щелчок и цветовая подсветка строки по её данным
+        table.setRowFactory(tv -> {
+            javafx.scene.control.TableRow<T> row = new javafx.scene.control.TableRow<>() {
+                @Override
+                protected void updateItem(T item, boolean empty) {
+                    super.updateItem(item, empty);
+                    getStyleClass().removeIf(c -> c.startsWith("row-"));
+                    if (!empty && item != null && rowStyle != null) {
+                        String style = rowStyle.apply(item);
+                        if (style != null) getStyleClass().add(style);
+                    }
+                }
+            };
+            row.setOnMouseClicked(e -> {
+                if (doubleClick != null && e.getClickCount() == 2 && !row.isEmpty()) doubleClick.accept(row.getItem());
+            });
+            return row;
+        });
+    }
+
+    private Consumer<T> doubleClick;
+    private Function<T, String> rowStyle;
+
+    /** CSS-класс строки (например, row-new для новых заявок) или null. */
+    public void setRowStyle(Function<T, String> style) {
+        this.rowStyle = style;
+        table.refresh();
     }
 
     public TableView<T> table() {
@@ -80,13 +107,7 @@ public class TablePanel<T> extends VBox {
 
     /** Двойной щелчок по строке. */
     public void onDoubleClick(Consumer<T> action) {
-        table.setRowFactory(tv -> {
-            javafx.scene.control.TableRow<T> row = new javafx.scene.control.TableRow<>();
-            row.setOnMouseClicked(e -> {
-                if (e.getClickCount() == 2 && !row.isEmpty()) action.accept(row.getItem());
-            });
-            return row;
-        });
+        this.doubleClick = action;
     }
 
     private Function<T, Object> changeKey;

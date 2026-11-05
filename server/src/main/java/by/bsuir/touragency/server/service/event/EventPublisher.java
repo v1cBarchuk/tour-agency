@@ -39,6 +39,16 @@ public class EventPublisher {
         }
     }
 
+    public void priceDropped(Tour tour, java.math.BigDecimal oldPrice) {
+        for (TourEventListener l : tourListeners) {
+            try {
+                l.priceDropped(tour, oldPrice);
+            } catch (RuntimeException e) {
+                LOG.log(Level.WARNING, "Подписчик не обработал снижение цены", e);
+            }
+        }
+    }
+
     public void bookingStatusChanged(int bookingId, int clientId, BookingStatus status, Integer actorId) {
         for (BookingEventListener l : bookingListeners) {
             try {

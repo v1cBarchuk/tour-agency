@@ -39,6 +39,15 @@ public enum CommandType {
     GET_MATCH,
     TOGGLE_FAVORITE,
     GET_FAVORITES,
+    GET_RECENTLY_VIEWED,
+    GET_SIMILAR_TOURS,
+    GET_WEATHER,
+    GET_RATES,
+
+    // личный кабинет
+    GET_PROFILE,
+    SAVE_PROFILE,
+    CHANGE_PASSWORD,
 
     // бронирование
     QUOTE_BOOKING,

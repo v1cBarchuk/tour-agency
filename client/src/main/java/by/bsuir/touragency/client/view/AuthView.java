@@ -62,7 +62,7 @@ public abstract class AuthView extends BaseView {
         hero.getChildren().addAll(shade, text);
 
         LangSwitch lang = new LangSwitch(I18n::setLang);
-        HBox top = new HBox(lang);
+        HBox top = new HBox(10, new by.bsuir.touragency.client.component.ThemeSwitch(), lang);
         top.setAlignment(Pos.TOP_RIGHT);
 
         VBox formBox = new VBox(buildForm());

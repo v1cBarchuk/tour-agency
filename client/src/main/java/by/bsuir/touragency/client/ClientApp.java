@@ -17,6 +17,10 @@ public class ClientApp extends Application {
     public void start(Stage stage) throws Exception {
         ClientConfig config = ClientConfig.load(getParameters().getRaw());
         ServerConnection.init(config.getHost(), config.getPort());
+        // после обрыва связи соединение и сессия восстанавливаются автоматически
+        ServerConnection.getInstance().setOnRestored(() -> javafx.application.Platform.runLater(
+                () -> by.bsuir.touragency.client.util.Alerts.toast(
+                        by.bsuir.touragency.client.util.I18n.t("conn.restored"))));
 
         stage.setMinWidth(480);
         stage.setMinHeight(420);

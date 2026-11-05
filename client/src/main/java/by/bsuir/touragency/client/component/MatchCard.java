@@ -19,8 +19,9 @@ public class MatchCard extends VBox {
 
     public MatchCard(MatchResult result, boolean showPercent, Consumer<Tour> onOpen) {
         super(0);
-        getStyleClass().add("match-card");
-        setMaxWidth(TourCard.WIDTH);
+        getStyleClass().addAll("match-card", "grid-item");
+        setPrefWidth(TourCard.WIDTH);
+        setMaxWidth(Double.MAX_VALUE);
         getChildren().add(new TourCard(result.getTour(), onOpen));
 
         VBox why = new VBox(4);

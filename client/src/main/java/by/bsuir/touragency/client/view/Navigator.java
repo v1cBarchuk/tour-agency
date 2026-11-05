@@ -27,6 +27,10 @@ public final class Navigator {
         });
     }
 
+    public static BaseView getCurrent() {
+        return current;
+    }
+
     public static Stage getStage() {
         return stage;
     }
@@ -36,8 +40,8 @@ public final class Navigator {
         Scene scene = stage.getScene();
         if (scene == null) {
             scene = new Scene(view.getRoot(), 1280, 800);
-            scene.getStylesheets().add(Objects.requireNonNull(
-                    Navigator.class.getResource("/css/app.css")).toExternalForm());
+            by.bsuir.touragency.client.util.Theme.apply(scene);
+            Hotkeys.install(scene);
             stage.setScene(scene);
         } else {
             scene.setRoot(view.getRoot());

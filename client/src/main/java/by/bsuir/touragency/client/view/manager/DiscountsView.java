@@ -66,6 +66,9 @@ public class DiscountsView extends BaseView {
             case SEASONAL -> t("disc.cond.SEASONAL", Fmt.shortDate(d.getValidFrom()), Fmt.date(d.getValidTo()));
             case EARLY_BOOKING -> t("disc.cond.EARLY_BOOKING", d.getMinDaysBefore());
             case LOYALTY -> t("disc.cond.LOYALTY", d.getMinCompletedTrips());
+            case PROMO_CODE -> t("disc.cond.PROMO_CODE", d.getPromoCode())
+                    + (d.getMaxUses() == null ? "" : " · " + t("disc.cond.uses", d.getUsedCount(), d.getMaxUses()))
+                    + (d.getValidTo() == null ? "" : " · " + t("disc.cond.until", Fmt.date(d.getValidTo())));
         };
     }
 

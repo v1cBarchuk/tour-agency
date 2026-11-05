@@ -399,6 +399,55 @@ audit = [
 insert("audit_log", ["user_id", "action", "object_type", "object_id", "details", "created_at"],
        [(u, a, ot, oi, d, dt(TODAY - timedelta(days=ago), 11)) for u, a, ot, oi, d, ago in audit])
 
+
+# ---------------- v2: личный кабинет, промокоды, история цен, просмотры, погода ----------------
+coords = {1: (36.8969, 30.7133), 2: (36.8625, 31.0556), 3: (36.5983, 30.5594), 4: (36.7675, 31.3889),
+          5: (27.2579, 33.8116), 6: (27.9158, 34.3300), 7: (25.2048, 55.2708), 8: (24.4539, 54.3773),
+          9: (7.8804, 98.3923), 10: (12.9236, 100.8825), 11: (4.4170, 73.5000), 12: (41.6168, 41.6367),
+          13: (42.4783, 44.4806), 14: (41.7151, 44.8271), 15: (41.9028, 12.4964), 16: (44.0678, 12.5695),
+          17: (41.3874, 2.1686), 18: (41.0764, 1.1316)}
+out.append("-- координаты городов для прогноза погоды (Open-Meteo)")
+out.extend(f"UPDATE cities SET latitude = {la}, longitude = {lo} WHERE city_id = {cid};"
+           for cid, (la, lo) in coords.items())
+out.append("")
+out.append("-- безвизовый въезд для граждан Беларуси (демо-данные: перед поездкой правила стоит уточнить)")
+out.extend(f"UPDATE countries SET visa_free = TRUE WHERE country_id = {cid};" for cid in (1, 5, 6))
+out.append("")
+out.append("-- данные личного кабинета")
+out.append("UPDATE users SET birth_date = '1998-04-12', home_city = 'Минск' WHERE user_id = 4;")
+out.append("UPDATE users SET birth_date = '1995-09-30', home_city = 'Гродно' WHERE user_id = 5;")
+out.append("")
+insert("discounts", ["discount_id", "name_ru", "name_en", "discount_type", "percent", "valid_from", "valid_to",
+                     "promo_code", "max_uses"],
+       [(7, "Промокод студента", "Student promo code", "PROMO_CODE", 15, date(2026, 9, 1), date(2027, 6, 30),
+         "STUDENT15", 50),
+        (8, "Промокод «Добро пожаловать»", "Welcome promo code", "PROMO_CODE", 8, None, None, "WELCOME8", None)])
+insert("tour_price_history", ["tour_id", "old_price", "new_price", "changed_by", "changed_at"],
+       [(9, 3990, 3790, 2, dt(TODAY - timedelta(days=6), 10)),
+        (11, 2290, 2020, 2, dt(TODAY - timedelta(days=3), 10)),
+        (23, 2750, 2600, 2, dt(TODAY - timedelta(days=2), 10))])
+insert("notifications", ["user_id", "type", "tour_id", "booking_id", "message", "is_read", "created_at"],
+       [(4, "PRICE_DROP", 11, None, "2290;2020", False, dt(TODAY - timedelta(days=3), 10)),
+        (4, "PRICE_DROP", 23, None, "2750;2600", False, dt(TODAY - timedelta(days=2), 10))])
+insert("tour_views", ["user_id", "tour_id", "viewed_at", "views_count"],
+       [(4, 12, dt(TODAY - timedelta(days=1), 18), 2), (4, 17, dt(TODAY - timedelta(days=1), 17), 1),
+        (4, 23, dt(TODAY - timedelta(days=2), 20), 3), (4, 13, dt(TODAY - timedelta(days=3), 12), 1),
+        (4, 24, dt(TODAY - timedelta(days=4), 15), 1)])
+
+# групповая бронь: тур №13 занят больше чем на 80 % — метка «Почти распродан»
+gu = user_by_id[7]
+gp = tour_by_id[13]["price"] * 6
+insert("bookings", ["booking_id", "user_id", "tour_id", "status_id", "discount_id", "persons_count", "base_price",
+                    "discount_amount", "total_price", "contact_phone", "contact_email", "created_at"],
+       [(bid, 7, 13, ST["CONFIRMED"], None, 6, gp, 0, gp, gu[6], gu[5], dt(TODAY - timedelta(days=2), 13))])
+insert("booking_tourists", ["booking_id", "tourist_no", "full_name", "birth_date"],
+       [(bid, n + 1, gu[4] if n == 0 else f"Турист {n + 1} {gu[4].split()[1]}", date(1980 + n * 4, 3 + n, 10))
+        for n in range(6)])
+insert("booking_status_history", ["booking_id", "status_id", "changed_by", "comment", "changed_at"],
+       [(bid, ST["NEW"], 7, "Групповая поездка", dt(TODAY - timedelta(days=2), 13)),
+        (bid, ST["PENDING_CONFIRMATION"], 2, None, dt(TODAY - timedelta(days=2), 17)),
+        (bid, ST["CONFIRMED"], 2, None, dt(TODAY - timedelta(days=1), 11))])
+
 header = """-- =====================================================================
 --  Демонстрационные данные (выполнять ПОСЛЕ tour_agency_db.sql)
 --  Даты рассчитаны относительно 02.11.2026.

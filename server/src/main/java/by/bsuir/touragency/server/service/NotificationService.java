@@ -50,6 +50,18 @@ public class NotificationService implements TourEventListener, BookingEventListe
         LOG.info("Новый тур #" + tour.getId() + ": уведомлено клиентов — " + sent);
     }
 
+    /** Снижение цены: уведомляются клиенты, у которых тур в избранном и включена такая рассылка. */
+    @Override
+    public void priceDropped(Tour tour, java.math.BigDecimal oldPrice) {
+        List<Integer> users = notificationDao.findPriceDropSubscribers(tour.getId());
+        String message = oldPrice.stripTrailingZeros().toPlainString() + ";"
+                + tour.getPricePerPerson().stripTrailingZeros().toPlainString();
+        for (int userId : users) {
+            notificationDao.create(userId, "PRICE_DROP", tour.getId(), null, message);
+        }
+        LOG.info("Снижение цены тура #" + tour.getId() + ": уведомлено клиентов — " + users.size());
+    }
+
     @Override
     public void statusChanged(int bookingId, int clientId, BookingStatus status, Integer actorId) {
         // клиент сам создал или оплатил бронь — уведомлять его об этом не нужно

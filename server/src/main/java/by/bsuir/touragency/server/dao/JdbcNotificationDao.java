@@ -14,6 +14,13 @@ public class JdbcNotificationDao extends BaseDao implements NotificationDao {
     }
 
     @Override
+    public List<Integer> findPriceDropSubscribers(int tourId) {
+        return query("SELECT f.user_id FROM favorites f JOIN users u ON u.user_id = f.user_id "
+                + "WHERE f.tour_id = ? AND u.notify_price_drop = TRUE AND u.is_blocked = FALSE",
+                rs -> rs.getInt("user_id"), tourId);
+    }
+
+    @Override
     public List<Notification> findByUser(int userId, Lang lang) {
         return query("SELECT n.*, COALESCE(t." + lang.col("title") + ", t.title_ru) tour_title FROM notifications n "
                         + "LEFT JOIN tours t ON t.tour_id = n.tour_id WHERE n.user_id = ? "

@@ -49,6 +49,7 @@ public class ManageToursView extends BaseView {
     protected Parent build() {
         panel = new TablePanel<>();
         search = new TextField();
+        search.getStyleClass().add("search-field");   // Ctrl+F
         search.setPromptText(t("mt.searchPrompt"));
         search.setPrefWidth(240);
         PauseTransition debounce = new PauseTransition(Duration.millis(350));

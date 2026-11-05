@@ -159,8 +159,11 @@ public class JdbcCatalogDao extends BaseDao implements CatalogDao {
 
     @Override
     public Optional<Hotel> findHotel(int id, Lang lang) {
-        return query(hotelSql(lang) + "WHERE h.hotel_id = ?", JdbcCatalogDao::mapHotel, id)
+        Optional<Hotel> hotel = query(hotelSql(lang) + "WHERE h.hotel_id = ?", JdbcCatalogDao::mapHotel, id)
                 .stream().findFirst();
+        hotel.ifPresent(h -> h.setPhotos(query("SELECT image_path FROM hotel_photos WHERE hotel_id = ? ORDER BY photo_no",
+                rs -> rs.getString(1), id)));
+        return hotel;
     }
 
     private static Hotel mapHotel(ResultSet rs) throws SQLException {

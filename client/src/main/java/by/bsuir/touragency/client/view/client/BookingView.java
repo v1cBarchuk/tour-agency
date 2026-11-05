@@ -51,6 +51,17 @@ public class BookingView extends BaseView {
     private Label total;
     private Label error;
     private Button submit;
+    private TextField promo;
+    private Label promoStatus;
+    private String appliedPromo;
+
+    private int initialPersons = 1;
+
+    /** Бронирование сразу на выбранное на странице тура число туристов. */
+    public BookingView(Shell shell, Tour tour, int persons) {
+        this(shell, tour);
+        this.initialPersons = Math.max(1, persons);
+    }
 
     public BookingView(Shell shell, Tour tour) {
         this.shell = shell;
@@ -73,12 +84,13 @@ public class BookingView extends BaseView {
         Label dates = new Label(Fmt.dateRange(tour.getStartDate(), tour.getEndDate()) + " · "
                 + t("common.nights", tour.getNights()) + " · " + tour.getMealTypeName());
         dates.getStyleClass().add("card-info");
-        HBox summary = new HBox(16, Images.cover(tour.getImagePath(), tour.getHotelName(), 180, 110, 12),
+        HBox summary = new HBox(18, Images.cover(tour.getImagePath(), tour.getHotelName(), 220, 130, 12),
                 new VBox(6, place, hotel, dates));
         summary.getStyleClass().addAll("card", "book-summary");
 
         // туристы
-        persons = new Spinner<>(1, Math.max(1, Math.min(9, tour.getFreeSeats())), 1);
+        int maxPersons = Math.max(1, Math.min(9, tour.getFreeSeats()));
+        persons = new Spinner<>(1, maxPersons, Math.min(initialPersons, maxPersons));
         persons.setEditable(true);
         persons.valueProperty().addListener((o, a, b) -> {
             rebuildTourists(b);
@@ -104,7 +116,7 @@ public class BookingView extends BaseView {
                 Ui.row(12, new Label(t("book.persons")), persons), touristsBox,
                 contactsTitle, contacts);
         HBox.setHgrow(form, Priority.ALWAYS);
-        form.setMaxWidth(620);
+        form.setMaxWidth(960);
 
         // стоимость
         base = new Label("—");
@@ -129,13 +141,34 @@ public class BookingView extends BaseView {
         totalLabel.getStyleClass().add("muted");
         Label caption = new Label(t("details.price"));
         caption.getStyleClass().add("section-title");
-        VBox priceCard = new VBox(12, caption, prices, discountWhy, totalLabel, total, submit, error);
-        priceCard.getStyleClass().addAll("card", "price-card");
-        priceCard.setPrefWidth(300);
-        priceCard.setMinWidth(290);
-        priceCard.setMaxWidth(300);
+        // промокод: проверяется сервером при расчёте цены (стратегия PROMO_CODE)
+        promo = new TextField();
+        promo.setPromptText(t("promo.prompt"));
+        HBox.setHgrow(promo, Priority.ALWAYS);
+        Button applyPromo = new Button(t("promo.apply"));
+        applyPromo.getStyleClass().add("btn-outline");
+        applyPromo.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        applyPromo.setOnAction(e -> {
+            String code = promo.getText().trim();
+            promoStatus.setText("");
+            promoStatus.getStyleClass().setAll("label");
+            appliedPromo = code.isEmpty() ? null : code;
+            requestQuote();
+        });
+        promo.setOnAction(e -> applyPromo.fire());
+        promoStatus = new Label();
+        promoStatus.setWrapText(true);
+        Label promoLabel = new Label(t("promo.title"));
+        promoLabel.getStyleClass().add("field-label");
+        VBox promoBox = new VBox(6, promoLabel, Ui.row(8, promo, applyPromo), promoStatus);
 
-        rebuildTourists(1);
+        VBox priceCard = new VBox(12, caption, prices, discountWhy, promoBox, totalLabel, total, submit, error);
+        priceCard.getStyleClass().addAll("card", "price-card");
+        priceCard.setPrefWidth(340);
+        priceCard.setMinWidth(300);
+        priceCard.setMaxWidth(360);
+
+        rebuildTourists(persons.getValue());
         requestQuote();
         HBox layout = new HBox(24, form, new VBox(priceCard));
         layout.setAlignment(Pos.TOP_LEFT);
@@ -176,8 +209,18 @@ public class BookingView extends BaseView {
     }
 
     private void requestQuote() {
-        Async.send(new Request(CommandType.QUOTE_BOOKING).with("tourId", tour.getId())
-                .with("persons", persons.getValue()), response -> {
+        Request rq = new Request(CommandType.QUOTE_BOOKING).with("tourId", tour.getId())
+                .with("persons", persons.getValue());
+        if (appliedPromo != null) rq.with("promoCode", appliedPromo);
+        Async.send(rq, response -> {
+            if (!response.isOk() && appliedPromo != null) {
+                // неверный промокод: сообщаем и пересчитываем цену без него
+                promoStatus.getStyleClass().setAll("label", "error");
+                promoStatus.setText(response.getMessage());
+                appliedPromo = null;
+                requestQuote();
+                return;
+            }
             if (!response.isOk()) {
                 error.setText(response.getMessage());
                 submit.setDisable(true);
@@ -195,6 +238,13 @@ public class BookingView extends BaseView {
                 discount.getStyleClass().add("discount-amount");
             }
             discountWhy.setText(explain(q));
+            if (appliedPromo != null) {
+                boolean used = "discount.why.PROMO_CODE".equals(q.explanationKey());
+                promoStatus.getStyleClass().setAll("label", used ? "reason-ok" : "muted");
+                promoStatus.setText(used ? t("promo.applied", appliedPromo.toUpperCase()) : t("promo.notBest"));
+            } else if (!promoStatus.getStyleClass().contains("error")) {
+                promoStatus.setText("");
+            }
             total.setText(Fmt.money(q.total()));
         });
     }
@@ -217,7 +267,8 @@ public class BookingView extends BaseView {
         }
         submit.setDisable(true);
         Async.send(new Request(CommandType.CREATE_BOOKING).with("tourId", tour.getId()).with("tourists", tourists)
-                .with("phone", phone.getText()).with("email", email.getText()), response -> {
+                .with("phone", phone.getText()).with("email", email.getText())
+                .with("promoCode", appliedPromo), response -> {
             submit.setDisable(false);
             if (response.isOk()) {
                 Alerts.info(t("book.done.title"), t("book.done.text"));

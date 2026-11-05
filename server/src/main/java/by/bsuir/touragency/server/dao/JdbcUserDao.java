@@ -17,7 +17,7 @@ public class JdbcUserDao extends BaseDao implements UserDao {
 
     private static final String SELECT_FIELDS =
             "SELECT user_id, role_id, login, password_hash, salt, full_name, email, phone, "
-                    + "is_blocked, language, created_at FROM users ";
+                    + "is_blocked, language, created_at, birth_date, home_city, notify_price_drop FROM users ";
 
     @Override
     public Optional<UserCredentials> findCredentialsByLogin(String login) {
@@ -123,6 +123,43 @@ public class JdbcUserDao extends BaseDao implements UserDao {
     }
 
     @Override
+    public void updateProfile(User u) {
+        update("UPDATE users SET full_name = ?, email = ?, phone = ?, birth_date = ?, home_city = ?, "
+                + "notify_price_drop = ? WHERE user_id = ?", u.getFullName(), u.getEmail(), u.getPhone(),
+                u.getBirthDate(), u.getHomeCity(), u.isNotifyPriceDrop(), u.getId());
+    }
+
+    @Override
+    public by.bsuir.touragency.common.model.ProfileStats profileStats(int userId) {
+        return query("SELECT "
+                + "(SELECT COUNT(*) FROM bookings WHERE user_id = ? AND status_id <> 7) bookings, "
+                + "(SELECT COUNT(*) FROM bookings b JOIN tours t ON t.tour_id = b.tour_id WHERE b.user_id = ? "
+                + "   AND b.status_id IN (3, 4, 5) AND t.start_date >= CURRENT_DATE) upcoming, "
+                + "(SELECT COUNT(*) FROM bookings WHERE user_id = ? AND status_id = 6) completed, "
+                + "(SELECT COALESCE(SUM(p.amount), 0) FROM payments p JOIN bookings b ON b.booking_id = p.booking_id "
+                + "   WHERE b.user_id = ?) spent, "
+                + "(SELECT COUNT(*) FROM favorites WHERE user_id = ?) favorites, "
+                + "(SELECT COUNT(*) FROM reviews r JOIN bookings b ON b.booking_id = r.booking_id WHERE b.user_id = ?) reviews, "
+                + "(SELECT COUNT(DISTINCT ci.country_id) FROM bookings b JOIN tours t ON t.tour_id = b.tour_id "
+                + "   JOIN hotels h ON h.hotel_id = t.hotel_id JOIN cities ci ON ci.city_id = h.city_id "
+                + "   WHERE b.user_id = ? AND b.status_id = 6) countries",
+                rs -> new by.bsuir.touragency.common.model.ProfileStats(rs.getInt("bookings"), rs.getInt("upcoming"),
+                        rs.getInt("completed"), rs.getBigDecimal("spent"), rs.getInt("favorites"),
+                        rs.getInt("reviews"), rs.getInt("countries")),
+                userId, userId, userId, userId, userId, userId, userId).get(0);
+    }
+
+    @Override
+    public void updatePassword(int userId, String passwordHash, String salt) {
+        update("UPDATE users SET password_hash = ?, salt = ? WHERE user_id = ?", passwordHash, salt, userId);
+    }
+
+    @Override
+    public boolean emailTakenByOther(String email, int userId) {
+        return !query("SELECT 1 FROM users WHERE email = ? AND user_id <> ?", rs -> 1, email, userId).isEmpty();
+    }
+
+    @Override
     public void setBlocked(int userId, boolean blocked) {
         simpleUpdate("UPDATE users SET is_blocked = ? WHERE user_id = ?", blocked, userId);
     }
@@ -160,6 +197,10 @@ public class JdbcUserDao extends BaseDao implements UserDao {
         user.setPhone(rs.getString("phone"));
         user.setBlocked(rs.getBoolean("is_blocked"));
         user.setLanguage(Lang.parse(rs.getString("language")));
+        java.sql.Date birth = rs.getDate("birth_date");
+        if (birth != null) user.setBirthDate(birth.toLocalDate());
+        user.setHomeCity(rs.getString("home_city"));
+        user.setNotifyPriceDrop(rs.getBoolean("notify_price_drop"));
         Timestamp created = rs.getTimestamp("created_at");
         if (created != null) {
             user.setCreatedAt(created.toLocalDateTime());

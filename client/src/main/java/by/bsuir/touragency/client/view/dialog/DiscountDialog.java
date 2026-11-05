@@ -31,6 +31,10 @@ public class DiscountDialog extends EditDialog<Discount> {
     private final VBox toField;
     private final VBox daysField;
     private final VBox tripsField;
+    private final TextField promoCode = new TextField();
+    private final TextField maxUses = Ui.numberField("100");
+    private final VBox codeField;
+    private final VBox usesField;
 
     public DiscountDialog(Discount existing) {
         super(existing == null ? I18n.t("disc.new") : existing.getName(I18n.getLang()));
@@ -40,6 +44,9 @@ public class DiscountDialog extends EditDialog<Discount> {
         toField = Ui.field(I18n.t("disc.validTo"), to);
         daysField = Ui.field(I18n.t("disc.minDays"), minDays);
         tripsField = Ui.field(I18n.t("disc.minTrips"), minTrips);
+        promoCode.setPromptText("SUMMER10");
+        codeField = Ui.field(I18n.t("disc.promoCode"), promoCode);
+        usesField = Ui.field(I18n.t("disc.maxUses"), maxUses);
 
         if (existing != null) {
             nameRu.setText(discount.getNameRu());
@@ -50,6 +57,8 @@ public class DiscountDialog extends EditDialog<Discount> {
             to.setValue(discount.getValidTo());
             if (discount.getMinDaysBefore() != null) minDays.setText(discount.getMinDaysBefore().toString());
             if (discount.getMinCompletedTrips() != null) minTrips.setText(discount.getMinCompletedTrips().toString());
+            if (discount.getPromoCode() != null) promoCode.setText(discount.getPromoCode());
+            maxUses.setText(discount.getMaxUses() == null ? "" : discount.getMaxUses().toString());
             active.setSelected(discount.isActive());
         } else {
             type.getSelectionModel().select(DiscountType.SEASONAL);
@@ -65,14 +74,22 @@ public class DiscountDialog extends EditDialog<Discount> {
         add(toField, 1, 2, 1);
         add(daysField, 0, 3, 1);
         add(tripsField, 1, 3, 1);
-        add(active, 0, 4, 2);
+        add(codeField, 0, 4, 1);
+        add(usesField, 1, 4, 1);
+        add(active, 0, 5, 2);
         updateVisibility();
     }
 
     private void updateVisibility() {
         DiscountType t = type.getValue();
-        show(fromField, t == DiscountType.SEASONAL);
-        show(toField, t == DiscountType.SEASONAL);
+        boolean promo = t == DiscountType.PROMO_CODE;
+        show(fromField, t == DiscountType.SEASONAL || promo);
+        show(toField, t == DiscountType.SEASONAL || promo);
+        show(codeField, promo);
+        // у промокода срок действия считается по дате бронирования, у сезонной скидки — по дате начала тура
+        ((javafx.scene.control.Label) fromField.getChildren().get(0)).setText(I18n.t(promo ? "disc.promoFrom" : "disc.validFrom"));
+        ((javafx.scene.control.Label) toField.getChildren().get(0)).setText(I18n.t(promo ? "disc.promoTo" : "disc.validTo"));
+        show(usesField, promo);
         show(daysField, t == DiscountType.EARLY_BOOKING);
         show(tripsField, t == DiscountType.LOYALTY);
         if (getDialogPane().getScene() != null && getDialogPane().getScene().getWindow() != null) {
@@ -95,6 +112,8 @@ public class DiscountDialog extends EditDialog<Discount> {
         discount.setValidTo(to.getValue());
         discount.setMinDaysBefore(Ui.integer(minDays));
         discount.setMinCompletedTrips(Ui.integer(minTrips));
+        discount.setPromoCode(promoCode.getText());
+        discount.setMaxUses(maxUses.getText().isBlank() ? null : Ui.integer(maxUses));
         discount.setActive(active.isSelected());
         return discount;
     }

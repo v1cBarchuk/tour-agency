@@ -16,4 +16,8 @@ public interface Shell {
 
     // Перегрузка: раздел с уже подготовленной страницей (например, каталог с фильтром)
     void openSection(String key, BaseView page);
+
+    /** Обновить текущую страницу (F5). */
+    default void refresh() {
+    }
 }

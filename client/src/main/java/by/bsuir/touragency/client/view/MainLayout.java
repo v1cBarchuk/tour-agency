@@ -101,8 +101,10 @@ public class MainLayout extends BaseView implements Shell {
             groups.put("menu.section.client", List.of(
                     new Section("menu.home", "⌂", () -> new HomeView(shell)),
                     new Section("menu.destinations", "◎", () -> new DestinationsView(shell)),
-                    new Section("menu.tours", "✈", () -> new ToursView(shell, null))));
+                    new Section("menu.tours", "✈", () -> new ToursView(shell, null)),
+                    new Section("menu.compare", "⇄", () -> new by.bsuir.touragency.client.view.client.CompareView(shell))));
             groups.put("menu.section.cabinet", List.of(
+                    new Section("menu.account", "☺", () -> new by.bsuir.touragency.client.view.client.ProfileView(shell)),
                     new Section("menu.preferences", "✎", () -> new PreferencesView(shell)),
                     new Section("menu.recommendations", "★", () -> new RecommendationsView(shell)),
                     new Section("menu.bookings", "▤", () -> new MyBookingsView(shell)),
@@ -133,19 +135,46 @@ public class MainLayout extends BaseView implements Shell {
         Label tagline = new Label(t("app.tagline"));
         tagline.getStyleClass().add("logo-tagline");
         tagline.setWrapText(true);
-        VBox sidebar = new VBox(2, new VBox(0, logo, tagline));
+        // кнопка сворачивания меню до узкой панели со значками
+        Button collapse = new Button("☰");
+        collapse.getStyleClass().add("sidebar-toggle");
+        collapse.setTooltip(new javafx.scene.control.Tooltip(t("menu.collapse")));
+        Region logoSpace = new Region();
+        HBox.setHgrow(logoSpace, Priority.ALWAYS);
+        HBox logoRow = new HBox(6, logo, logoSpace, collapse);
+        logoRow.setAlignment(Pos.CENTER_LEFT);
+        VBox sidebar = new VBox(2, new VBox(0, logoRow, tagline));
         sidebar.getStyleClass().add("sidebar");
+        java.util.List<Node> wideOnly = new java.util.ArrayList<>(List.of(logo, tagline));
 
         groups.forEach((groupKey, sections) -> {
             Label group = new Label(t(groupKey).toUpperCase(I18n.getLang().getLocale()));
             group.getStyleClass().add("menu-group");
             sidebar.getChildren().add(group);
             for (Section s : sections) {
-                Button item = new Button(s.icon() + "   " + t(s.key()));
+                Label icon = new Label(s.icon());
+                icon.getStyleClass().add("menu-icon");
+                Label text = new Label(t(s.key()));
+                text.getStyleClass().add("menu-text");
+                Region gap = new Region();
+                HBox.setHgrow(gap, Priority.ALWAYS);
+                Label badge = new Label();
+                badge.getStyleClass().add("menu-badge");
+                badge.setVisible(false);
+                badge.setManaged(false);
+                HBox row = new HBox(12, icon, text, gap, badge);
+                row.setAlignment(Pos.CENTER_LEFT);
+                Button item = new Button();
+                item.setGraphic(row);
+                item.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
                 item.getStyleClass().add("menu-item");
                 item.setMaxWidth(Double.MAX_VALUE);
+                row.prefWidthProperty().bind(item.widthProperty().subtract(24));
+                item.setTooltip(new javafx.scene.control.Tooltip(t(s.key())));
                 item.setOnAction(e -> openSection(s.key()));
                 menuButtons.put(s.key(), item);
+                menuBadges.put(s.key(), badge);
+                menuTexts.put(s.key(), text);
                 sidebar.getChildren().add(item);
             }
         });
@@ -155,7 +184,27 @@ public class MainLayout extends BaseView implements Shell {
         who.getStyleClass().add("sidebar-user");
         Label role = new Label(t("role." + user.getRole().name()));
         role.getStyleClass().add("sidebar-role");
-        sidebar.getChildren().addAll(grow, new VBox(0, who, role));
+        VBox userBox = new VBox(0, who, role);
+        wideOnly.add(userBox);
+        sidebar.getChildren().addAll(grow, userBox);
+        collapse.setOnAction(e -> {
+            boolean now = !sidebar.getStyleClass().contains("sidebar-collapsed");
+            setSidebarCollapsed(sidebar, wideOnly, now);
+            try {
+                java.util.prefs.Preferences.userNodeForPackage(MainLayout.class).putBoolean("sidebar.collapsed", now);
+            } catch (Exception ignored) {
+                // состояние меню просто не запомнится
+            }
+        });
+        setSidebarCollapsed(sidebar, wideOnly,
+                java.util.prefs.Preferences.userNodeForPackage(MainLayout.class).getBoolean("sidebar.collapsed", false));
+        // счётчики «Избранное» и «Сравнение»
+        by.bsuir.touragency.client.util.FavoritesCount.property().addListener((o, a, b) -> setBadge("menu.favorites", b.intValue()));
+        if (user.getRole() == Role.CLIENT) {
+            Async.<java.util.ArrayList<by.bsuir.touragency.common.model.Tour>>quiet(new Request(CommandType.GET_FAVORITES),
+                    list -> by.bsuir.touragency.client.util.FavoritesCount.set(list.size()));
+        }
+        setBadge("menu.favorites", by.bsuir.touragency.client.util.FavoritesCount.property().get());
 
         // ---------- верхняя панель
         backButton = new Button("←  " + t("common.back"));
@@ -168,10 +217,26 @@ public class MainLayout extends BaseView implements Shell {
         LangSwitch lang = new LangSwitch(this::changeLanguage);
         Label avatar = new Label(initials(user.getFullName()));
         avatar.getStyleClass().add("avatar");
+        avatar.setCursor(javafx.scene.Cursor.HAND);
+        javafx.scene.control.Tooltip.install(avatar, new javafx.scene.control.Tooltip(t("menu.account")));
+        avatar.setOnMouseClicked(e -> {
+            if (menuButtons.containsKey("menu.account")) {
+                openSection("menu.account");
+            } else {
+                open(new by.bsuir.touragency.client.view.client.ProfileView(this));
+            }
+        });
         Button logout = new Button(t("common.logout"));
         logout.getStyleClass().add("btn-outline");
         logout.setOnAction(e -> logout());
-        HBox topbar = new HBox(14, backButton, pageTitle, spacer, lang);
+        by.bsuir.touragency.client.component.CurrencySwitch currency =
+                new by.bsuir.touragency.client.component.CurrencySwitch(this::rebuildPages);
+        Async.<java.util.HashMap<String, java.math.BigDecimal>>quiet(new Request(CommandType.GET_RATES), rates -> {
+            by.bsuir.touragency.client.util.Currency.setRates(rates);
+            if (!by.bsuir.touragency.client.util.Currency.isBase()) rebuildPages();   // сохранённая валюта
+        });
+        HBox topbar = new HBox(14, backButton, pageTitle, spacer, new by.bsuir.touragency.client.component.ThemeSwitch(),
+                currency, lang);
         if (user.getRole() == Role.CLIENT) {
             topbar.getChildren().add(bell());
         }
@@ -181,6 +246,7 @@ public class MainLayout extends BaseView implements Shell {
 
         content = new StackPane();
         content.getStyleClass().add("content");
+        compareBar = compareBar();
 
         BorderPane main = new BorderPane();
         main.setTop(topbar);
@@ -291,6 +357,23 @@ public class MainLayout extends BaseView implements Shell {
     }
 
     @Override
+    public void refresh() {
+        if (stack.size() == 1 && currentSection != null) {
+            openSection(currentSection);            // раздел создаётся заново и загружает свежие данные
+        } else if (!stack.isEmpty()) {
+            BaseView page = stack.pop();
+            stack.push(page.fresh());
+            render();
+        }
+    }
+
+    /** Перестроить все открытые страницы (цены в новой валюте), оставаясь на текущей. */
+    private void rebuildPages() {
+        stack.forEach(BaseView::invalidate);
+        if (!stack.isEmpty()) render();
+    }
+
+    @Override
     public void open(BaseView page) {
         stack.push(page);
         render();
@@ -309,8 +392,18 @@ public class MainLayout extends BaseView implements Shell {
         Node node = page.getRoot();
         ScrollPane scroll = new ScrollPane(node);
         scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);      // страница подстраивается по ширине
         scroll.getStyleClass().add("content-scroll");
-        content.getChildren().setAll(scroll);
+        content.getChildren().setAll(scroll, compareBar);
+        updateCompareBar();
+        // плавное появление раздела: прозрачность и небольшой сдвиг снизу вверх (250 мс)
+        node.setOpacity(0);
+        node.setTranslateY(10);
+        javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(javafx.util.Duration.millis(250), node);
+        fade.setToValue(1);
+        javafx.animation.TranslateTransition slide = new javafx.animation.TranslateTransition(javafx.util.Duration.millis(250), node);
+        slide.setToY(0);
+        new javafx.animation.ParallelTransition(fade, slide).play();
         pageTitle.setText(page.getTitle());
         backButton.setVisible(stack.size() > 1);
         backButton.setManaged(stack.size() > 1);
@@ -336,7 +429,79 @@ public class MainLayout extends BaseView implements Shell {
         });
     }
 
+    // ------------------------------------------------------------ панель сравнения
+
+    private HBox compareBar;
+    private Label compareText;
+
+    /** Плавающая панель внизу окна: сколько туров выбрано для сравнения и переход к сравнению. */
+    private HBox compareBar() {
+        compareText = new Label();
+        compareText.getStyleClass().add("compare-bar-text");
+        Button open = new Button(t("compare.open"));
+        open.getStyleClass().add("btn-accent");
+        open.setOnAction(e -> openSection("menu.compare"));
+        Button clear = new Button(t("compare.clear"));
+        clear.getStyleClass().add("btn-ghost");
+        clear.setOnAction(e -> by.bsuir.touragency.client.util.CompareList.clear());
+        HBox bar = new HBox(14, new Label("⇄"), compareText, open, clear);
+        bar.getStyleClass().add("compare-bar");
+        bar.setAlignment(Pos.CENTER_LEFT);
+        bar.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        StackPane.setAlignment(bar, Pos.BOTTOM_CENTER);
+        StackPane.setMargin(bar, new Insets(0, 0, 22, 0));
+        by.bsuir.touragency.client.util.CompareList.tours().addListener(
+                (javafx.collections.ListChangeListener<by.bsuir.touragency.common.model.Tour>) c -> updateCompareBar());
+        return bar;
+    }
+
+    private final Map<String, Label> menuBadges = new LinkedHashMap<>();
+    private final Map<String, Label> menuTexts = new LinkedHashMap<>();
+
+    /** Число рядом с пунктом меню; 0 — счётчик скрыт. */
+    private void setBadge(String key, int count) {
+        Label badge = menuBadges.get(key);
+        if (badge == null) return;
+        badge.setText(String.valueOf(count));
+        badge.setVisible(count > 0);
+        badge.setManaged(count > 0);
+    }
+
+    /** Узкое меню (72 px): только значки и счётчики, названия — во всплывающих подсказках. */
+    private void setSidebarCollapsed(VBox sidebar, List<Node> wideOnly, boolean collapsed) {
+        sidebar.getStyleClass().remove("sidebar-collapsed");
+        if (collapsed) sidebar.getStyleClass().add("sidebar-collapsed");
+        wideOnly.forEach(n -> {
+            n.setVisible(!collapsed);
+            n.setManaged(!collapsed);
+        });
+        menuTexts.values().forEach(l -> {
+            l.setVisible(!collapsed);
+            l.setManaged(!collapsed);
+        });
+        menuButtons.values().forEach(b -> {
+            if (b.getGraphic() instanceof HBox row) {
+                row.setSpacing(collapsed ? 3 : 12);
+                row.setAlignment(collapsed ? Pos.CENTER : Pos.CENTER_LEFT);
+                Node gap = row.getChildren().get(2);                  // распорка между текстом и счётчиком
+                gap.setVisible(!collapsed);
+                gap.setManaged(!collapsed);
+            }
+        });
+    }
+
+    private void updateCompareBar() {
+        if (compareBar == null) return;
+        int n = by.bsuir.touragency.client.util.CompareList.tours().size();
+        boolean show = n > 0 && !"menu.compare".equals(currentSection);
+        compareBar.setVisible(show);
+        compareBar.setManaged(show);
+        compareText.setText(t("compare.bar", n, by.bsuir.touragency.client.util.CompareList.MAX));
+        setBadge("menu.compare", n);
+    }
+
     private void logout() {
+        by.bsuir.touragency.client.util.CompareList.clear();
         if (bellTimer != null) bellTimer.stop();
         Async.send(new Request(CommandType.LOGOUT), response -> {
             ClientContext.clear();

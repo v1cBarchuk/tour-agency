@@ -35,6 +35,12 @@ public class CatalogService {
     private final TourDao tourDao;
     private final DiscountDao discountDao;
     private final AuditDao auditDao;
+    private by.bsuir.touragency.server.service.event.EventPublisher events;
+
+    /** Издатель событий каталога: снижение цены рассылается подписчикам. */
+    public void setEvents(by.bsuir.touragency.server.service.event.EventPublisher events) {
+        this.events = events;
+    }
 
     public CatalogService(CatalogDao catalogDao, TourDao tourDao, DiscountDao discountDao, AuditDao auditDao) {
         this.catalogDao = catalogDao;
@@ -159,6 +165,13 @@ public class CatalogService {
             tourDao.update(t);
             id = t.getId();
             auditDao.log(actor.getId(), "UPDATE", "TOUR", id, describeChanges(old, t));
+            int priceChange = t.getPricePerPerson().compareTo(old.getPricePerPerson());
+            if (priceChange != 0) {
+                tourDao.addPriceHistory(id, old.getPricePerPerson(), t.getPricePerPerson(), actor.getId());
+            }
+            if (priceChange < 0 && events != null) {
+                events.priceDropped(getTour(id, lang), old.getPricePerPerson());   // Observer
+            }
         }
         return getTour(id, lang);
     }
@@ -237,6 +250,28 @@ public class CatalogService {
                 d.setValidTo(null);
                 d.setMinDaysBefore(null);
             }
+            case PROMO_CODE -> {
+                String code = d.getPromoCode() == null ? "" : d.getPromoCode().trim().toUpperCase();
+                if (!code.matches("[A-Z0-9_-]{3,30}")) {
+                    throw new ValidationException("discount.codeRequired");
+                }
+                boolean taken = discountDao.findAll().stream().anyMatch(x -> code.equalsIgnoreCase(x.getPromoCode())
+                        && !x.getId().equals(d.getId()));
+                if (taken) throw new ValidationException("discount.codeTaken");
+                if (d.getMaxUses() != null && d.getMaxUses() < 1) {
+                    throw new ValidationException("validation.range", "field.maxUses", 1, 10000);
+                }
+                if (d.getValidFrom() != null && d.getValidTo() != null) {
+                    Validator.datesOrder(d.getValidFrom(), d.getValidTo());
+                }
+                d.setPromoCode(code);
+                d.setMinDaysBefore(null);
+                d.setMinCompletedTrips(null);
+            }
+        }
+        if (d.getType() != by.bsuir.touragency.common.model.DiscountType.PROMO_CODE) {
+            d.setPromoCode(null);
+            d.setMaxUses(null);
         }
         boolean isNew = d.getId() == null;
         int id = discountDao.save(d);

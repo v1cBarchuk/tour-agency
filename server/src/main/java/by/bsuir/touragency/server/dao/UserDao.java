@@ -26,4 +26,13 @@ public interface UserDao {
     void updateRole(int userId, by.bsuir.touragency.common.model.Role role);
 
     void setBlocked(int userId, boolean blocked);
+
+    /** Личный кабинет: ФИО, контакты, дата рождения, город вылета, настройки уведомлений. */
+    void updateProfile(User user);
+
+    void updatePassword(int userId, String passwordHash, String salt);
+
+    boolean emailTakenByOther(String email, int userId);
+
+    by.bsuir.touragency.common.model.ProfileStats profileStats(int userId);
 }

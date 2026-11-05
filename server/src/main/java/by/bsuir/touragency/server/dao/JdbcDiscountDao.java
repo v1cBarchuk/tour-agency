@@ -41,21 +41,26 @@ public class JdbcDiscountDao extends BaseDao implements DiscountDao {
         d.setMinCompletedTrips(getInteger(rs, "min_completed_trips"));
         d.setActive(rs.getBoolean("is_active"));
         d.setUsedCount(rs.getInt("used_count"));
+        d.setPromoCode(rs.getString("promo_code"));
+        d.setMaxUses(getInteger(rs, "max_uses"));
         return d;
     }
 
     @Override
     public int save(Discount d) {
         Object[] values = {d.getNameRu(), d.getNameEn(), d.getType(), d.getPercent(), d.getValidFrom(),
-                d.getValidTo(), d.getMinDaysBefore(), d.getMinCompletedTrips(), d.isActive()};
+                d.getValidTo(), d.getMinDaysBefore(), d.getMinCompletedTrips(), d.getPromoCode(), d.getMaxUses(),
+                d.isActive()};
         if (d.getId() == null) {
             return insert("INSERT INTO discounts (name_ru, name_en, discount_type, percent, valid_from, valid_to, "
-                    + "min_days_before, min_completed_trips, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", values);
+                    + "min_days_before, min_completed_trips, promo_code, max_uses, is_active) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", values);
         }
         Object[] withId = java.util.Arrays.copyOf(values, values.length + 1);
         withId[values.length] = d.getId();
         update("UPDATE discounts SET name_ru = ?, name_en = ?, discount_type = ?, percent = ?, valid_from = ?, "
-                + "valid_to = ?, min_days_before = ?, min_completed_trips = ?, is_active = ? WHERE discount_id = ?",
+                + "valid_to = ?, min_days_before = ?, min_completed_trips = ?, promo_code = ?, max_uses = ?, "
+                + "is_active = ? WHERE discount_id = ?",
                 withId);
         return d.getId();
     }
